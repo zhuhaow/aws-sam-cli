@@ -209,10 +209,10 @@ for:
         fi"
 
       - sh: "
-        if [[ -n $RUN_BUILD_CMD_TEST_ONLY]]
-          then pytest -vv tests/integration/buildcmd
+        if [[ -n $RUN_BUILD_CMD_TEST_ONLY ]];
+          then pytest -vv tests/integration/buildcmd;
         else
-          pytest -vv tests/integration --ignore tests/integration/buildcmd
+          pytest -vv tests/integration --ignore tests/integration/buildcmd;
         fi"
 
       - ps: "If ($env:RUN_BUILD_CMD_TEST_ONLY) {pytest -vv tests/regression}"
