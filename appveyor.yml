@@ -18,6 +18,17 @@ environment:
       AWS_S3: 'AWS_S3_36'
       AWS_ECR: 'AWS_ECR_36'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
+      RUN_BUILD_CMD_TEST_ONLY: 1
+
+    - PYTHON_HOME: "C:\\Python36-x64"
+      PYTHON_VERSION: '3.6'
+      PYTHON_ARCH: '64'
+      NOSE_PARAMETERIZED_NO_WARN: 1
+      INSTALL_PY_37_PIP: 1
+      INSTALL_PY_38_PIP: 1
+      AWS_S3: 'AWS_S3_36'
+      AWS_ECR: 'AWS_ECR_36'
+      APPVEYOR_CONSOLE_DISABLE_PTY: true
 
     - PYTHON_HOME: "C:\\Python37-x64"
       PYTHON_VERSION: '3.7'
@@ -30,6 +41,18 @@ environment:
       AWS_ECR: 'AWS_ECR_37'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
 
+    - PYTHON_HOME: "C:\\Python37-x64"
+      PYTHON_VERSION: '3.7'
+      PYTHON_ARCH: '64'
+      RUN_SMOKE: 1
+      NOSE_PARAMETERIZED_NO_WARN: 1
+      INSTALL_PY_36_PIP: 1
+      INSTALL_PY_38_PIP: 1
+      AWS_S3: 'AWS_S3_37'
+      AWS_ECR: 'AWS_ECR_37'
+      APPVEYOR_CONSOLE_DISABLE_PTY: true
+      RUN_BUILD_CMD_TEST_ONLY: 1
+
     - PYTHON_HOME: "C:\\Python38-x64"
       PYTHON_VERSION: '3.8'
       PYTHON_ARCH: '64'
@@ -40,6 +63,18 @@ environment:
       AWS_S3: 'AWS_S3_38'
       AWS_ECR: 'AWS_ECR_38'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
+
+    - PYTHON_HOME: "C:\\Python38-x64"
+      PYTHON_VERSION: '3.8'
+      PYTHON_ARCH: '64'
+      RUN_SMOKE: 1
+      NOSE_PARAMETERIZED_NO_WARN: 1
+      INSTALL_PY_36_PIP: 1
+      INSTALL_PY_37_PIP: 1
+      AWS_S3: 'AWS_S3_38'
+      AWS_ECR: 'AWS_ECR_38'
+      APPVEYOR_CONSOLE_DISABLE_PTY: true
+      RUN_BUILD_CMD_TEST_ONLY: 1
 
 for:
   - 
@@ -173,9 +208,14 @@ for:
           then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws; 
         fi"
 
+      - sh: "
+        if [[ -n $RUN_BUILD_CMD_TEST_ONLY]]
+          then pytest -vv tests/integration/buildcmd
+        else
+          pytest -vv tests/integration --ignore tests/integration/buildcmd
+        fi"
 
-      - sh: "pytest -vv tests/integration"
-      - sh: "pytest -vv tests/regression"
+      - ps: "If ($env:RUN_BUILD_CMD_TEST_ONLY) {pytest -vv tests/regression}"
       - sh: "black --check setup.py tests samcli"
 
       # Set JAVA_HOME to java11
