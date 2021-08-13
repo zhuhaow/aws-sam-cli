@@ -7,9 +7,13 @@ a tech debt that we have decided to take on. This will be eventually thrown away
 rich public interface.
 """
 
+import os
 import copy
 import functools
+import json
 from typing import Dict
+
+import boto3
 
 from samtranslator.model import ResourceTypeResolver, sam_resources
 
@@ -23,12 +27,17 @@ from samtranslator.model.exceptions import (
 from samtranslator.plugins import LifeCycleEvents
 from samtranslator.translator.translator import prepare_plugins
 from samtranslator.validator.validator import SamTemplateValidator
+from samtranslator.translator.managed_policy_translator import ManagedPolicyLoader
 
 from samcli.commands.validate.lib.exceptions import InvalidSamDocumentException
 from .local_uri_plugin import SupportLocalUriPlugin
 
 
 class SamTranslatorWrapper:
+
+    _thisdir = os.path.dirname(os.path.abspath(__file__))
+    _DEFAULT_MANAGED_POLICIES_FILE = os.path.join(_thisdir, "default_managed_policies.json")
+
     def __init__(self, sam_template, parameter_values=None, offline_fallback=True):
         """
 
@@ -76,6 +85,24 @@ class SamTranslatorWrapper:
     @property
     def template(self):
         return copy.deepcopy(self._sam_template)
+
+    def managed_policy_map(self):
+        """
+        This method is unused and a Work In Progress
+        """
+        try:
+            iam_client = boto3.client("iam")
+            return ManagedPolicyLoader(iam_client).load()
+        except Exception as ex:
+
+            if self._offline_fallback:
+                # If offline flag is set, then fall back to the list of default managed policies
+                # This should be sufficient for most cases
+                with open(self._DEFAULT_MANAGED_POLICIES_FILE, "r") as fp:
+                    return json.load(fp)
+
+            # Offline is not enabled. So just raise the exception
+            raise ex
 
 
 class _SamParserReimplemented:
