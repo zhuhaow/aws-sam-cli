@@ -2,6 +2,8 @@ from unittest import TestCase
 
 from unittest.mock import patch
 
+import boto3
+
 from samcli.lib.intrinsic_resolver.invalid_intrinsic_exception import InvalidSymbolException
 from samcli.lib.intrinsic_resolver.intrinsic_property_resolver import IntrinsicResolver
 from samcli.lib.intrinsic_resolver.intrinsics_symbol_table import IntrinsicsSymbolTable
@@ -68,6 +70,10 @@ class TestIntrinsicsSymbolTablePseudoProperties(TestCase):
 
 
 class TestSymbolResolution(TestCase):
+
+    def setUp(self) -> None:
+        self.region_name = boto3.session.Session().region_name or "us-east-1"
+
     def test_parameter_symbols(self):
         template = {"Resources": {}, "Parameters": {"Test": {"Default": "data"}}}
         symbol_resolver = IntrinsicsSymbolTable(template=template)
@@ -115,20 +121,20 @@ class TestSymbolResolution(TestCase):
 
     def test_arn_resolver_default_service_name(self):
         res = IntrinsicsSymbolTable().arn_resolver("test")
-        self.assertEqual(res, "arn:aws:lambda:us-east-1:123456789012:function:test")
+        self.assertEqual(res, f"arn:aws:lambda:{self.region_name}:123456789012:function:test")
 
     def test_arn_resolver_lambda(self):
         res = IntrinsicsSymbolTable().arn_resolver("test", service_name="lambda")
-        self.assertEqual(res, "arn:aws:lambda:us-east-1:123456789012:function:test")
+        self.assertEqual(res, f"arn:aws:lambda:{self.region_name}:123456789012:function:test")
 
     def test_arn_resolver_sns(self):
         res = IntrinsicsSymbolTable().arn_resolver("test", service_name="sns")
-        self.assertEqual(res, "arn:aws:sns:us-east-1:123456789012:test")
+        self.assertEqual(res, f"arn:aws:sns:{self.region_name}:123456789012:test")
 
     def test_arn_resolver_lambda_with_function_name(self):
         template = {"Resources": {"LambdaFunction": {"Properties": {"FunctionName": "function-name-override"}}}}
         res = IntrinsicsSymbolTable(template=template).arn_resolver("LambdaFunction", service_name="lambda")
-        self.assertEqual(res, "arn:aws:lambda:us-east-1:123456789012:function:function-name-override")
+        self.assertEqual(res, f"arn:aws:lambda:{self.region_name}:123456789012:function:function-name-override")
 
     def test_resolver_ignore_errors(self):
         resolver = IntrinsicsSymbolTable()
