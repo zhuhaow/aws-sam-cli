@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
+import boto3
 from parameterized import parameterized
 
 from samcli.lib.intrinsic_resolver.intrinsic_property_resolver import IntrinsicResolver
@@ -1073,8 +1074,9 @@ class TestResolveTemplate(TestCase):
 
     def load_test_data(self, template_path):
         integration_path = str(Path(__file__).resolve().parents[0].joinpath("test_data", template_path))
+        region_name = boto3.session.Session().region_name or "us-east-1"
         with open(integration_path) as f:
-            template = json.load(f)
+            template = json.loads(f.read().replace("us-east-1", region_name))
         return template
 
     @parameterized.expand(
