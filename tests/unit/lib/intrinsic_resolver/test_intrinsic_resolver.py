@@ -1096,6 +1096,9 @@ class TestResolveTemplate(TestCase):
         processed_template = resolver.resolve_template()
         processed_template = json.loads(json.dumps(processed_template))  # Removes formatting of ordered dicts
         expected_template = self.load_test_data(output)
+        if processed_template != expected_template:
+            print(json.dumps(processed_template, indent=2))
+            print(json.dumps(expected_template, indent=2))
         self.assertEqual(processed_template, expected_template)
 
 
