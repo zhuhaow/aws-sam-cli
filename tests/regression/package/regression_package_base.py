@@ -120,4 +120,8 @@ class PackageRegressionBase(TestCase):
             output_sam = yaml_parse(output_sam)
             output_aws = yaml_parse(output_aws)
 
-        self.assertEqual(output_sam, output_aws)
+        self.assertEqual(
+            output_sam,
+            output_aws,
+            f"Found difference\n{json.dumps(output_sam, indent=2)}\n{json.dumps(output_aws, indent=2)}"
+        )
