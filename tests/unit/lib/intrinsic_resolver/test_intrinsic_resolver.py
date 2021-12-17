@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
-import boto3
 from parameterized import parameterized
 
 from samcli.lib.intrinsic_resolver.intrinsic_property_resolver import IntrinsicResolver
