@@ -5,6 +5,7 @@ image:
 
 environment:
   AWS_DEFAULT_REGION: us-east-1
+  AWS_REGION: us-east-1
   SAM_CLI_DEV: 1
  
   matrix:
@@ -19,6 +20,8 @@ environment:
       AWS_S3: 'AWS_S3_36'
       AWS_ECR: 'AWS_ECR_36'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_REGION: us-east-1
 
     - PYTHON_HOME: "C:\\Python37-x64"
       PYTHON_VERSION: '3.7'
@@ -31,6 +34,8 @@ environment:
       AWS_S3: 'AWS_S3_37'
       AWS_ECR: 'AWS_ECR_37'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_REGION: us-east-2
 
     - PYTHON_HOME: "C:\\Python38-x64"
       PYTHON_VERSION: '3.8'
@@ -43,6 +48,8 @@ environment:
       AWS_S3: 'AWS_S3_38'
       AWS_ECR: 'AWS_ECR_38'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
+      AWS_DEFAULT_REGION: us-west-1
+      AWS_REGION: us-west-1
 
     - PYTHON_HOME: "C:\\Python39-x64"
       PYTHON_VERSION: '3.9'
@@ -55,6 +62,8 @@ environment:
       AWS_S3: 'AWS_S3_39'
       AWS_ECR: 'AWS_ECR_39'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
+      AWS_DEFAULT_REGION: us-west-2
+      AWS_REGION: us-west-2
 
 for:
   - 
@@ -200,7 +209,8 @@ for:
           then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws; 
         fi"
 
-      - sh: "pytest -vv tests/integration"
+      - sh: "pytest -vv -n 16 -m 'not sequential' tests/integration" # run some tests in parallel
+      - sh: "pytest -vv -m sequential tests/integration" # run other in sequential
       - sh: "pytest -vv tests/regression"
       - sh: "black --check setup.py tests samcli"
 
