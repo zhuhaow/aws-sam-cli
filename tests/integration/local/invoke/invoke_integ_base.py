@@ -4,12 +4,15 @@ from unittest import TestCase, skipIf
 from pathlib import Path
 from subprocess import Popen, PIPE, TimeoutExpired
 
+import pytest
+
 from tests.testing_utils import SKIP_DOCKER_MESSAGE, SKIP_DOCKER_TESTS
 
 TIMEOUT = 300
 
 
 @skipIf(SKIP_DOCKER_TESTS, SKIP_DOCKER_MESSAGE)
+@pytest.mark.sequential
 class InvokeIntegBase(TestCase):
     template: Optional[Path] = None
 

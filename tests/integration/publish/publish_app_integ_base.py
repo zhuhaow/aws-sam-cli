@@ -9,9 +9,12 @@ from unittest import TestCase
 import boto3
 from pathlib import Path
 
+import pytest
+
 S3_SLEEP = 3
 
 
+@pytest.mark.sequential
 class PublishAppIntegBase(TestCase):
     @classmethod
     def setUpClass(cls):

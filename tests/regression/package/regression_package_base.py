@@ -123,5 +123,5 @@ class PackageRegressionBase(TestCase):
         self.assertEqual(
             output_sam,
             output_aws,
-            f"Found difference\n{json.dumps(output_sam, indent=2)}\n{json.dumps(output_aws, indent=2)}"
+            f"Found difference\n{json.dumps(output_sam, indent=2)}\n{json.dumps(output_aws, indent=2)}",
         )

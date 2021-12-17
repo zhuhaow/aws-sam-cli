@@ -9,6 +9,7 @@ from unittest.mock import Mock
 
 import boto3
 import botocore.exceptions
+import pytest
 from botocore.exceptions import ClientError
 
 from samcli.lib.pipeline.bootstrap.stage import Stage
@@ -51,6 +52,7 @@ class InitIntegBase(PipelineBase):
         return command_list
 
 
+@pytest.mark.sequential
 class BootstrapIntegBase(PipelineBase):
     region = "us-east-1"
     stack_names: List[str]

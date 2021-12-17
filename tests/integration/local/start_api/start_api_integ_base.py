@@ -9,10 +9,13 @@ import os
 import random
 from pathlib import Path
 
+import pytest
+
 from tests.testing_utils import SKIP_DOCKER_MESSAGE, SKIP_DOCKER_TESTS, run_command
 
 
 @skipIf(SKIP_DOCKER_TESTS, SKIP_DOCKER_MESSAGE)
+@pytest.mark.sequential
 class StartApiIntegBaseClass(TestCase):
     template: Optional[str] = None
     container_mode: Optional[str] = None

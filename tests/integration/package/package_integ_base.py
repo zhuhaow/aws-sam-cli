@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import TestCase
 
 import boto3
+import pytest
 from botocore.exceptions import ClientError
 
 from samcli.lib.bootstrap.companion_stack.data_types import CompanionStack
@@ -14,6 +15,7 @@ CFN_PYTHON_VERSION_SUFFIX = os.environ.get("PYTHON_VERSION", "0.0.0").replace(".
 SLEEP = 3
 
 
+@pytest.mark.sequential
 class PackageIntegBase(TestCase):
     @classmethod
     def setUpClass(cls):

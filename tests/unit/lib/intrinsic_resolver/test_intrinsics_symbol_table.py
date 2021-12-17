@@ -70,7 +70,6 @@ class TestIntrinsicsSymbolTablePseudoProperties(TestCase):
 
 
 class TestSymbolResolution(TestCase):
-
     def setUp(self) -> None:
         self.region_name = boto3.session.Session().region_name or "us-east-1"
 
