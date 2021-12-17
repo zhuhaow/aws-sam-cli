@@ -209,7 +209,7 @@ for:
           then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws; 
         fi"
 
-      - sh: "pytest -vv -n 16 -m 'not sequential' tests/integration" # run some tests in parallel
+      - sh: "pytest -vv -n 8 -m 'not sequential' tests/integration" # run some tests in parallel
       - sh: "pytest -vv -m sequential tests/integration" # run other in sequential
       - sh: "pytest -vv tests/regression"
       - sh: "black --check setup.py tests samcli"
