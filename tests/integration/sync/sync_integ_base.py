@@ -2,7 +2,10 @@ import os
 import json
 from unittest import TestCase
 
+import pytest
 
+
+@pytest.mark.sequential
 class SyncIntegBase(TestCase):
     @classmethod
     def setUpClass(cls):

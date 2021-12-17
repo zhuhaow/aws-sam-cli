@@ -10,10 +10,13 @@ import os
 import random
 from pathlib import Path
 
+import pytest
+
 from tests.testing_utils import SKIP_DOCKER_TESTS, SKIP_DOCKER_MESSAGE, run_command
 
 
 @skipIf(SKIP_DOCKER_TESTS, SKIP_DOCKER_MESSAGE)
+@pytest.mark.sequential
 class StartLambdaIntegBaseClass(TestCase):
     template: Optional[str] = None
     container_mode: Optional[str] = None
