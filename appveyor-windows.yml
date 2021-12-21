@@ -46,50 +46,46 @@ init:
   - ps: gcim Win32_OperatingSystem | % { "$([int]($_.TotalVisibleMemorySize/1mb)) Gb" }
 
 install:
+  # setup make
+  - "choco install make"
 
-    # setup make
-    - "choco install make"
+  # Make sure the temp directory exists for Python to use.
+  - ps: "mkdir -Force D:\\tmp"
+  - "SET PATH=%PYTHON_HOME%;%PATH%"
+  - "echo %PYTHON_HOME%"
+  - "echo %PATH%"
+  - "python --version"
+  - "docker info"
 
-    # Make sure the temp directory exists for Python to use.
-    - ps: "mkdir -Force D:\\tmp"
-    - "SET PATH=%PYTHON_HOME%;%PATH%"
-    - "echo %PYTHON_HOME%"
-    - "echo %PATH%"
-    - "python --version"
-    - "docker info"
+  # Upgrade setuptools, wheel and virtualenv
+  - "python -m pip install --upgrade setuptools wheel virtualenv"
 
-    # Upgrade setuptools, wheel and virtualenv
-    - "python -m pip install --upgrade setuptools wheel virtualenv"
+  # Install AWS CLI Globally via pip3
+  - "pip install awscli"
 
-    # Install AWS CLI Globally via pip3
-    - "pip install awscli"
+  # Create pre-dev virtual env without installing dev depenencies
+  # This is used for import check for prod code to prevent importing packages from dev.txt
+  - "rm -rf pre-dev-venv"
+  - "python -m virtualenv pre-dev-venv"
+  - "pre-dev-venv\\Scripts\\activate"
+  - "python --version"
+  - "deactivate"
 
-    # Create pre-dev virtual env without installing dev depenencies
-    # This is used for import check for prod code to prevent importing packages from dev.txt
-    - "rm -rf pre-dev-venv"
-    - "python -m virtualenv pre-dev-venv"
-    - "pre-dev-venv\\Scripts\\activate"
-    - "python --version"
-    - "deactivate"
+  # Create dev virtual env
+  - "rm -rf venv"
+  - "python -m virtualenv venv"
+  - "venv\\Scripts\\activate"
+  - "python --version"
+  - "deactivate"
 
-    # Create dev virtual env
-    - "rm -rf venv"
-    - "python -m virtualenv venv"
-    - "venv\\Scripts\\activate"
-    - "python --version"
-    - "deactivate"
+  # Switch to Docker Linux containers
+  - ps: Switch-DockerLinux
 
-    # Install aws cli
-    - "pip install awscli"
+  # Check for git executable
+  - "git --version"
 
-    # Switch to Docker Linux containers
-    - ps: Switch-DockerLinux
-
-    # Check for git executable
-    - "git --version"
-
-    # Echo final Path
-    - "echo %PATH%"
+  # Echo final Path
+  - "echo %PATH%"
 
 for:
   - matrix:
