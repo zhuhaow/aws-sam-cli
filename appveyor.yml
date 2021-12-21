@@ -126,13 +126,6 @@ install:
 build_script:
   - "python -c \"import sys; print(sys.executable)\""
 
-test_script:
-  # Runs only in Linux, logging Public ECR when running canary and cred is available
-  - sh: "
-    if [[ -n $BY_CANARY ]];
-      then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
-    fi"
-
 
 for:
 
@@ -141,6 +134,10 @@ for:
         - configuration: Sequential
 
     test_script:
+      - sh: "
+        if [[ -n $BY_CANARY ]];
+          then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+        fi"
       - "pip install -e \".[dev]\""
       - sh: "pytest -vv -m sequential tests/integration"
 
@@ -149,6 +146,10 @@ for:
         - configuration: Parallel
 
     test_script:
+      - sh: "
+        if [[ -n $BY_CANARY ]];
+          then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+        fi"
       - "pip install -e \".[dev]\""
       - sh: "pytest -vv -n 8 -m 'not sequential' tests/integration"
       # Set JAVA_HOME to java11
@@ -160,6 +161,10 @@ for:
         - configuration: RestOfThem
 
     test_script:
+      - sh: "
+        if [[ -n $BY_CANARY ]];
+          then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+        fi"
       - # Pre-dev Tests
       - "pip install -e \".[pre-dev]\""
       - "pylint --rcfile .pylintrc samcli"

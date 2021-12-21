@@ -91,16 +91,6 @@ install:
     # Echo final Path
     - "echo %PATH%"
 
-test_script:
-  # Reactivate virtualenv before running tests
-  - ps: "
-      If (Test-Path env:BY_CANARY){
-        echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
-      }"
-  - "git --version"
-  - "venv\\Scripts\\activate"
-  - "docker system prune -a -f"
-
 for:
   - matrix:
       only:
@@ -121,6 +111,13 @@ for:
       - "deactivate"
 
     test_script:
+      - ps: "
+        If (Test-Path env:BY_CANARY){
+          echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+        }"
+      - "git --version"
+      - "venv\\Scripts\\activate"
+      - "docker system prune -a -f"
       # Run pylint on pre-dev env to catch import errors
       - "pre-dev-venv\\Scripts\\activate"
       - "pylint --rcfile .pylintrc samcli"
@@ -140,6 +137,13 @@ for:
         - configuration: Sequential
 
     test_script:
+      - ps: "
+        If (Test-Path env:BY_CANARY){
+          echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+        }"
+      - "git --version"
+      - "venv\\Scripts\\activate"
+      - "docker system prune -a -f"
       - "pytest -vv -m sequential tests/integration" # run other in sequential
 
   - matrix:
@@ -147,6 +151,13 @@ for:
         - configuration: Parallel
 
     test_script:
+      - ps: "
+        If (Test-Path env:BY_CANARY){
+          echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+        }"
+      - "git --version"
+      - "venv\\Scripts\\activate"
+      - "docker system prune -a -f"
       - "pytest -vv -n 4 -m \"not sequential\" tests/integration" # run some tests in parallel
 
 # Uncomment for RDP
