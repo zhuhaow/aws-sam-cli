@@ -1,12 +1,11 @@
 version: 1.0.{build}
 image: 
   - Ubuntu
-  - Visual Studio 2019
 
 configuration:
   - Sequential
   - Parallel
-  - SmokeAndRegression
+  - RestOfThem
 
 environment:
   AWS_DEFAULT_REGION: us-east-1
@@ -70,152 +69,72 @@ environment:
       AWS_DEFAULT_REGION: us-west-2
       AWS_REGION: us-west-2
 
+install:
+  # apt repo for python3.9 installation
+  - sh: "sudo add-apt-repository ppa:deadsnakes/ppa"
+  # AppVeyor's apt-get cache might be outdated, and the package could potentially be 404.
+  - sh: "sudo apt-get update"
+
+  - sh: "gvm use go1.13"
+  - sh: "echo $PATH"
+  - sh: "ls /usr/"
+  - sh: "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64"
+  - sh: "PATH=$JAVA_HOME/bin:$PATH"
+  - sh: "source ${HOME}/venv${PYTHON_VERSION}/bin/activate"
+  - sh: "rvm use 2.5"
+  - sh: "docker --version"
+
+  # Install latest gradle
+  - sh: "sudo apt-get -y remove gradle"
+  - sh: "wget https://services.gradle.org/distributions/gradle-5.5-bin.zip -P /tmp"
+  - sh: "sudo unzip -d /opt/gradle /tmp/gradle-*.zip"
+  - sh: "PATH=/opt/gradle/gradle-5.5/bin:$PATH"
+
+  # Install AWS CLI
+  - sh: "virtualenv aws_cli"
+  - sh: "./aws_cli/bin/python -m pip install awscli"
+  - sh: "PATH=$(echo $PWD'/aws_cli/bin'):$PATH"
+
+  - sh: "sudo apt-get -y install python3.6"
+  - sh: "sudo apt-get -y install python2.7"
+  - sh: "sudo apt-get -y install python3.7"
+  - sh: "sudo apt-get -y install python3.8"
+  - sh: "sudo apt-get -y install python3.9"
+
+  - sh: "which python3.8"
+  - sh: "which python3.7"
+  - sh: "which python3.6"
+  - sh: "which python3.9"
+  - sh: "which python2.7"
+
+  - sh: "PATH=$PATH:/usr/bin/python3.9:/usr/bin/python3.8:/usr/bin/python3.7"
+  - sh: "curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py"
+
+  - sh: "sudo apt-get -y install python3-distutils"
+  - sh: "sudo apt-get -y install python3.9-distutils"
+  - ps: "If ($env:INSTALL_PY_39_PIP) {python3.9 get-pip.py --user}"
+  - ps: "If ($env:INSTALL_PY_38_PIP) {python3.8 get-pip.py --user}"
+  - ps: "If ($env:INSTALL_PY_37_PIP) {python3.7 get-pip.py --user}"
+  - ps: "If ($env:INSTALL_PY_36_PIP) {python3.6 get-pip.py --user}"
+
+  # required for RIE with arm64 in linux
+  - sh: "docker run --rm --privileged multiarch/qemu-user-static --reset -p yes"
+
+  # update ca-certificates which causes failures with newest golang library
+  - sh: "sudo apt-get install --reinstall ca-certificates"
+
+build_script:
+  - "python -c \"import sys; print(sys.executable)\""
+
+test_script:
+  # Runs only in Linux, logging Public ECR when running canary and cred is available
+  - sh: "
+    if [[ -n $BY_CANARY ]];
+      then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+    fi"
+
+
 for:
-  - 
-    matrix:
-      only:
-        - image: Visual Studio 2019
-
-    install:
-      - "SET PATH=%PYTHON_HOME%;%PATH%"
-      - "echo %PYTHON_HOME%"
-      - "echo %PATH%"
-      - "python --version"
-      # Upgrade setuptools, wheel and virtualenv
-      - "SET PATH=%PYTHON_HOME%;%PATH%"
-      - "echo %PYTHON_HOME%"
-      - "echo %PATH%"
-      - "python -m pip install --upgrade setuptools wheel virtualenv"
-      - "docker info"
-
-      # Install AWS CLI Globally outside of a venv.
-      - "pip install awscli"
-      
-      # Create pre-dev virtual env without installing dev depenencies
-      # This is used for import check for prod code to prevent importing packages from dev.txt
-      - "rm -rf pre-dev-venv"
-      - "python -m virtualenv pre-dev-venv"
-      - "pre-dev-venv\\Scripts\\activate"
-      - "python --version"
-      - "deactivate"
-
-      # Create dev virtual env
-      - "rm -rf venv"
-      - "python -m virtualenv venv"
-      - "venv\\Scripts\\activate"
-      - "python --version"
-      - "deactivate"
-
-    build_script:
-      # Install pre-dev dependencies
-      # This env is currently used for doing import check with Pylint without dev.txt dependencies installed 
-      - "pre-dev-venv\\Scripts\\activate"
-      - "python -c \"import sys; print(sys.executable)\""
-      - "pip install -e \".[pre-dev]\""
-      - "deactivate"
-
-      # Install dev dependencies
-      - "venv\\Scripts\\activate"
-      - "python -c \"import sys; print(sys.executable)\""
-      - "pip install -e \".[dev]\""
-      - "deactivate"
-
-    test_script:
-      # Run pylint on pre-dev env to catch import errors
-      - "pre-dev-venv\\Scripts\\activate"
-      - "pylint --rcfile .pylintrc samcli"
-      - "deactivate"
-
-      # Run tests with dev env
-      - "venv\\Scripts\\activate"
-      - "pytest --cov samcli --cov-report term-missing --cov-fail-under 94 tests/unit"
-      - "pylint --rcfile .pylintrc samcli"
-      - "mypy setup.py samcli tests"
-      - "pytest -n 4 tests/functional"
-      - "deactivate"
-
-  - 
-    matrix:
-      only:
-        - image: Ubuntu
-
-    install:
-      # apt repo for python3.9 installation
-      - sh: "sudo add-apt-repository ppa:deadsnakes/ppa"
-      # AppVeyor's apt-get cache might be outdated, and the package could potentially be 404.
-      - sh: "sudo apt-get update"
-
-      - sh: "gvm use go1.13"
-      - sh: "echo $PATH"
-      - sh: "ls /usr/"
-      - sh: "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64"
-      - sh: "PATH=$JAVA_HOME/bin:$PATH"
-      - sh: "source ${HOME}/venv${PYTHON_VERSION}/bin/activate"
-      - sh: "rvm use 2.5"
-      - sh: "docker --version"
-
-      # Install latest gradle 
-      - sh: "sudo apt-get -y remove gradle"
-      - sh: "wget https://services.gradle.org/distributions/gradle-5.5-bin.zip -P /tmp"
-      - sh: "sudo unzip -d /opt/gradle /tmp/gradle-*.zip"
-      - sh: "PATH=/opt/gradle/gradle-5.5/bin:$PATH"
-
-      # Install AWS CLI
-      - sh: "virtualenv aws_cli"
-      - sh: "./aws_cli/bin/python -m pip install awscli"
-      - sh: "PATH=$(echo $PWD'/aws_cli/bin'):$PATH"
-
-      - sh: "sudo apt-get -y install python3.6"
-      - sh: "sudo apt-get -y install python2.7"
-      - sh: "sudo apt-get -y install python3.7"
-      - sh: "sudo apt-get -y install python3.8"
-      - sh: "sudo apt-get -y install python3.9"
-
-      - sh: "which python3.8"
-      - sh: "which python3.7"
-      - sh: "which python3.6"
-      - sh: "which python3.9"
-      - sh: "which python2.7"
-
-      - sh: "PATH=$PATH:/usr/bin/python3.9:/usr/bin/python3.8:/usr/bin/python3.7"
-      - sh: "curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py"
-
-      - sh: "sudo apt-get -y install python3-distutils"
-      - sh: "sudo apt-get -y install python3.9-distutils"
-      - ps: "If ($env:INSTALL_PY_39_PIP) {python3.9 get-pip.py --user}"
-      - ps: "If ($env:INSTALL_PY_38_PIP) {python3.8 get-pip.py --user}"
-      - ps: "If ($env:INSTALL_PY_37_PIP) {python3.7 get-pip.py --user}"
-      - ps: "If ($env:INSTALL_PY_36_PIP) {python3.6 get-pip.py --user}"
-
-      # required for RIE with arm64 in linux
-      - sh: "docker run --rm --privileged multiarch/qemu-user-static --reset -p yes"
-
-      # update ca-certificates which causes failures with newest golang library
-      - sh: "sudo apt-get install --reinstall ca-certificates"
-
-    build_script:
-      - "python -c \"import sys; print(sys.executable)\""
-
-    test_script:
-      # Pre-dev Tests
-      - "pip install -e \".[pre-dev]\""
-      - "pylint --rcfile .pylintrc samcli"
-
-      # Dev Tests
-      - "pip install -e \".[dev]\""
-      - "pytest --cov samcli --cov-report term-missing --cov-fail-under 94 tests/unit"
-      - "pylint --rcfile .pylintrc samcli"
-      - "mypy setup.py samcli tests"
-      - "pytest -n 4 tests/functional"
-
-      # Runs only in Linux, logging Public ECR when running canary and cred is available
-      - sh: "
-        if [[ -n $BY_CANARY ]];
-          then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws; 
-        fi"
-      - sh: "black --check setup.py tests samcli"
-
-
 
   - matrix:
       only:
@@ -223,6 +142,7 @@ for:
         - image: Ubuntu
 
     test_script:
+      - "pip install -e \".[dev]\""
       - sh: "pytest -vv -m sequential tests/integration"
 
   - matrix:
@@ -231,6 +151,7 @@ for:
         - image: Ubuntu
 
     test_script:
+      - "pip install -e \".[dev]\""
       - sh: "pytest -vv -n 8 -m 'not sequential' tests/integration"
       # Set JAVA_HOME to java11
       - sh: "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
@@ -238,9 +159,20 @@ for:
 
   - matrix:
       only:
-        - configuration: SmokeAndRegression
+        - configuration: RestOfThem
         - image: Ubuntu
 
     test_script:
-      - sh: "pytest -vv tests/regression"
-      - ps: "If ($env:RUN_SMOKE) {pytest -n 4 -vv tests/smoke}"
+      - # Pre-dev Tests
+      - "pip install -e \".[pre-dev]\""
+      - "pylint --rcfile .pylintrc samcli"
+
+      # Dev Tests
+      - "pip install -e \".[dev]\""
+      - "pytest --cov samcli --cov-report term-missing --cov-fail-under 94 tests/unit"
+      - "pylint --rcfile .pylintrc samcli"
+      - "mypy setup.py samcli tests"
+      - "black --check setup.py tests samcli"
+      - "pytest -n 4 tests/functional"
+      - "pytest -vv tests/regression"
+      - "If ($env:RUN_SMOKE) {pytest -n 4 -vv tests/smoke}"

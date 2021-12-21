@@ -5,6 +5,11 @@ build: off
 # Change the clone folder to somewhere in "D:\" because this is shared by default with Docker. We need this to mount folders.
 clone_folder: D:\source
 
+configuration:
+  - Sequential
+  - Parallel
+  - RestOfThem
+
 environment:
   AWS_DEFAULT_REGION: sa-east-1
   AWS_REGION: sa-east-1
@@ -30,15 +35,15 @@ environment:
   AWS_ECR: 'AWS_ECR_37'
   APPVEYOR_CONSOLE_DISABLE_PTY: true
 
+cache:
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+
 init:
   # Uncomment this for RDP
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - ps: gcim Win32_Processor | % { "$($_.NumberOfLogicalProcessors) logical CPUs" }
   - ps: gcim Win32_OperatingSystem | % { "$([int]($_.TotalVisibleMemorySize/1mb)) Gb" }
-
-cache:
-  - C:\ProgramData\chocolatey\bin -> appveyor.yml
-  - C:\ProgramData\chocolatey\lib -> appveyor.yml
 
 install:
 
@@ -59,13 +64,20 @@ install:
     # Install AWS CLI Globally via pip3
     - "pip install awscli"
 
-    # Create new virtual environment with chosen python version and activate it
+    # Create pre-dev virtual env without installing dev depenencies
+    # This is used for import check for prod code to prevent importing packages from dev.txt
+    - "rm -rf pre-dev-venv"
+    - "python -m virtualenv pre-dev-venv"
+    - "pre-dev-venv\\Scripts\\activate"
+    - "python --version"
+    - "deactivate"
+
+    # Create dev virtual env
+    - "rm -rf venv"
     - "python -m virtualenv venv"
     - "venv\\Scripts\\activate"
     - "python --version"
-
-    # Actually install SAM CLI's dependencies
-    - "pip install -e \".[dev]\""
+    - "deactivate"
 
     # Install aws cli
     - "pip install awscli"
@@ -80,17 +92,62 @@ install:
     - "echo %PATH%"
 
 test_script:
-    # Reactivate virtualenv before running tests
-    - ps: "
-        If (Test-Path env:BY_CANARY){
-          echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws; 
-        }"
-    - "git --version"
-    - "venv\\Scripts\\activate"
-    - "docker system prune -a -f"
-    - "pytest -vv -n 4 -m \"not sequential\" tests/integration" # run some tests in parallel
-    - "pytest -vv -m sequential tests/integration" # run other in sequential
-    - "pytest -vv tests/regression"
+  # Reactivate virtualenv before running tests
+  - ps: "
+      If (Test-Path env:BY_CANARY){
+        echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+      }"
+  - "git --version"
+  - "venv\\Scripts\\activate"
+  - "docker system prune -a -f"
+
+for:
+  - matrix:
+      only:
+        - configuration: RestOfThem
+
+    build_script:
+      # Install pre-dev dependencies
+      # This env is currently used for doing import check with Pylint without dev.txt dependencies installed
+      - "pre-dev-venv\\Scripts\\activate"
+      - "python -c \"import sys; print(sys.executable)\""
+      - "pip install -e \".[pre-dev]\""
+      - "deactivate"
+
+      # Install dev dependencies
+      - "venv\\Scripts\\activate"
+      - "python -c \"import sys; print(sys.executable)\""
+      - "pip install -e \".[dev]\""
+      - "deactivate"
+
+    test_script:
+      # Run pylint on pre-dev env to catch import errors
+      - "pre-dev-venv\\Scripts\\activate"
+      - "pylint --rcfile .pylintrc samcli"
+      - "deactivate"
+
+      # Run tests with dev env
+      - "venv\\Scripts\\activate"
+      - "pytest --cov samcli --cov-report term-missing --cov-fail-under 94 tests/unit"
+      - "pylint --rcfile .pylintrc samcli"
+      - "mypy setup.py samcli tests"
+      - "pytest -n 4 tests/functional"
+      - "pytest -vv tests/regression"
+      - "deactivate"
+
+  - matrix:
+      only:
+        - configuration: Sequential
+
+    test_script:
+      - "pytest -vv -m sequential tests/integration" # run other in sequential
+
+  - matrix:
+      only:
+        - configuration: Parallel
+
+    test_script:
+      - "pytest -vv -n 4 -m \"not sequential\" tests/integration" # run some tests in parallel
 
 # Uncomment for RDP
 # on_finish:
