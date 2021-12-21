@@ -87,7 +87,7 @@ test_script:
     - "git --version"
     - "venv\\Scripts\\activate"
     - "docker system prune -a -f"
-    - "pytest -vv -n 4 -m 'not sequential' tests/integration" # run some tests in parallel
+    - "pytest -vv -n 4 -m \"not sequential\" tests/integration" # run some tests in parallel
     - "pytest -vv -m sequential tests/integration" # run other in sequential
     - "pytest -vv tests/regression"
 
