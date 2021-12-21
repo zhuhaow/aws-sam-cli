@@ -3,6 +3,11 @@ image:
   - Ubuntu
   - Visual Studio 2019
 
+configuration:
+  - Sequential
+  - Parallel
+  - SmokeAndRegression
+
 environment:
   AWS_DEFAULT_REGION: us-east-1
   AWS_REGION: us-east-1
@@ -208,16 +213,34 @@ for:
         if [[ -n $BY_CANARY ]];
           then echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws; 
         fi"
-
-      - sh: "pytest -vv -n 8 -m 'not sequential' tests/integration" # run some tests in parallel
-      - sh: "pytest -vv -m sequential tests/integration" # run other in sequential
-      - sh: "pytest -vv tests/regression"
       - sh: "black --check setup.py tests samcli"
 
+
+
+  - matrix:
+      only:
+        - configuration: Sequential
+        - image: Ubuntu
+
+    test_script:
+      - sh: "pytest -vv -m sequential tests/integration"
+
+  - matrix:
+      only:
+        - configuration: Parallel
+        - image: Ubuntu
+
+    test_script:
+      - sh: "pytest -vv -n 8 -m 'not sequential' tests/integration"
       # Set JAVA_HOME to java11
       - sh: "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
       - sh: "pytest -vv tests/integration/buildcmd/test_build_cmd.py -k test_building_java11_in_process"
 
-      # Smoke tests run in parallel - it runs on both Linux & Windows
-      # Presence of the RUN_SMOKE envvar will run the smoke tests
+  - matrix:
+      only:
+        - configuration: SmokeAndRegression
+        - image: Ubuntu
+
+    test_script:
+      - sh: "pytest -vv tests/regression"
       - ps: "If ($env:RUN_SMOKE) {pytest -n 4 -vv tests/smoke}"
