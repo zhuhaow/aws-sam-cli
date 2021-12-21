@@ -5,6 +5,8 @@ import logging
 import subprocess
 import timeit
 import time
+
+import pytest
 import requests
 import re
 
@@ -27,6 +29,7 @@ TELEMETRY_ENDPOINT_URL = "http://{}:{}".format(TELEMETRY_ENDPOINT_HOST, TELEMETR
 EXPECTED_TELEMETRY_PROMPT = re.sub(r"\n", os.linesep, TELEMETRY_PROMPT)
 
 
+@pytest.mark.sequential
 class IntegBase(TestCase):
     @classmethod
     def setUpClass(cls):
