@@ -139,7 +139,6 @@ for:
   - matrix:
       only:
         - configuration: Sequential
-        - image: Ubuntu
 
     test_script:
       - "pip install -e \".[dev]\""
@@ -148,7 +147,6 @@ for:
   - matrix:
       only:
         - configuration: Parallel
-        - image: Ubuntu
 
     test_script:
       - "pip install -e \".[dev]\""
@@ -160,7 +158,6 @@ for:
   - matrix:
       only:
         - configuration: RestOfThem
-        - image: Ubuntu
 
     test_script:
       - # Pre-dev Tests
