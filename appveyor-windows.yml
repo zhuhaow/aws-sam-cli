@@ -62,6 +62,7 @@ install:
 
   # Install AWS CLI Globally via pip3
   - "pip install awscli"
+  - "aws --version"
 
   # Create pre-dev virtual env without installing dev depenencies
   # This is used for import check for prod code to prevent importing packages from dev.txt
