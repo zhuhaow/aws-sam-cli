@@ -7,10 +7,14 @@ from pathlib import Path
 from typing import Set
 from unittest import skipIf
 
+import jmespath
+import docker
+import jmespath
 import pytest
 from parameterized import parameterized, parameterized_class
 
 from samcli.lib.utils import osutils
+from samcli.yamlhelper import yaml_parse
 from tests.testing_utils import (
     IS_WINDOWS,
     RUNNING_ON_CI,
@@ -81,6 +85,155 @@ class TestBuildCommand_PythonFunctions_Images(BuildIntegBase):
         self._verify_invoke_built_function(
             self.built_template, self.FUNCTION_LOGICAL_ID_IMAGE, self._make_parameter_override_arg(overrides), expected
         )
+
+
+@skipIf(
+    # Hits public ECR pull limitation, move it to canary tests
+    ((not RUN_BY_CANARY) or (IS_WINDOWS and RUNNING_ON_CI) and not CI_OVERRIDE),
+    "Skip build tests on windows when running in CI unless overridden",
+)
+@parameterized_class(
+    ("template", "prop"),
+    [
+        ("template_local_prebuilt_image.yaml", "ImageUri"),
+        ("template_cfn_local_prebuilt_image.yaml", "Code.ImageUri"),
+    ],
+)
+class TestSkipBuildingFunctionsWithLocalImageUri(BuildIntegBase):
+    EXPECTED_FILES_PROJECT_MANIFEST: Set[str] = set()
+
+    FUNCTION_LOGICAL_ID_IMAGE = "ImageFunction"
+
+    @parameterized.expand(["3.6", "3.7", "3.8", "3.9"])
+    @pytest.mark.flaky(reruns=3)
+    def test_with_default_requirements(self, runtime):
+        _tag = f"{random.randint(1,100)}"
+        image_uri = f"func:{_tag}"
+        docker_client = docker.from_env()
+        docker_client.images.build(
+            path=str(Path(self.test_data_path, "PythonImage")),
+            dockerfile="Dockerfile",
+            buildargs={"BASE_RUNTIME": runtime},
+            tag=image_uri,
+        )
+        overrides = {
+            "ImageUri": image_uri,
+            "Handler": "main.handler",
+        }
+        cmdlist = self.get_command_list(parameter_overrides=overrides)
+
+        LOG.info("Running Command: ")
+        LOG.info(cmdlist)
+        run_command(cmdlist, cwd=self.working_dir)
+
+        self._verify_image_build_artifact(
+            self.built_template,
+            self.FUNCTION_LOGICAL_ID_IMAGE,
+            self.prop,
+            {"Ref": "ImageUri"},
+        )
+
+        expected = {"pi": "3.14"}
+        self._verify_invoke_built_function(
+            self.built_template, self.FUNCTION_LOGICAL_ID_IMAGE, self._make_parameter_override_arg(overrides), expected
+        )
+
+
+@skipIf(
+    # Hits public ECR pull limitation, move it to canary tests
+    ((not RUN_BY_CANARY) or (IS_WINDOWS and RUNNING_ON_CI) and not CI_OVERRIDE),
+    "Skip build tests on windows when running in CI unless overridden",
+)
+@parameterized_class(
+    ("template", "SKIPPED_FUNCTION_LOGICAL_ID", "src_code_path", "src_code_prop", "metadata_key"),
+    [
+        ("template_function_flagged_to_skip_build.yaml", "SkippedFunction", "PreBuiltPython", "CodeUri", None),
+        ("template_cfn_function_flagged_to_skip_build.yaml", "SkippedFunction", "PreBuiltPython", "Code", None),
+        (
+            "cdk_v1_synthesized_template_python_function_construct.json",
+            "SkippedFunctionDA0220D7",
+            "asset.7023fd47c81480184154c6e0e870d6920c50e35d8fae977873016832e127ded9",
+            None,
+            "aws:asset:path",
+        ),
+        (
+            "cdk_v1_synthesized_template_function_construct_with_skip_build_metadata.json",
+            "SkippedFunctionDA0220D7",
+            "asset.7023fd47c81480184154c6e0e870d6920c50e35d8fae977873016832e127ded9",
+            None,
+            "aws:asset:path",
+        ),
+        (
+            "cdk_v2_synthesized_template_python_function_construct.json",
+            "SkippedFunctionDA0220D7",
+            "asset.7023fd47c81480184154c6e0e870d6920c50e35d8fae977873016832e127ded9",
+            None,
+            "aws:asset:path",
+        ),
+        (
+            "cdk_v2_synthesized_template_function_construct_with_skip_build_metadata.json",
+            "RandomSpaceFunction4F8564D0",
+            "asset.7023fd47c81480184154c6e0e870d6920c50e35d8fae977873016832e127ded9",
+            None,
+            "aws:asset:path",
+        ),
+    ],
+)
+class TestSkipBuildingFlaggedFunctions(BuildIntegPythonBase):
+    template = "template_cfn_function_flagged_to_skip_build.yaml"
+    SKIPPED_FUNCTION_LOGICAL_ID = "SkippedFunction"
+    src_code_path = "PreBuiltPython"
+    src_code_prop = "Code"
+    metadata_key = None
+
+    @pytest.mark.flaky(reruns=3)
+    def test_with_default_requirements(self):
+        self._validate_skipped_built_function(
+            self.default_build_dir,
+            self.SKIPPED_FUNCTION_LOGICAL_ID,
+            self.test_data_path,
+            self.src_code_path,
+            self.src_code_prop,
+            self.metadata_key,
+        )
+
+    def _validate_skipped_built_function(
+        self, build_dir, skipped_function_logical_id, relative_path, src_code_path, src_code_prop, metadata_key
+    ):
+
+        cmdlist = self.get_command_list()
+
+        LOG.info("Running Command: {}".format(cmdlist))
+        run_command(cmdlist, cwd=self.working_dir)
+
+        self.assertTrue(build_dir.exists(), "Build directory should be created")
+
+        build_dir_files = os.listdir(str(build_dir))
+        self.assertNotIn(skipped_function_logical_id, build_dir_files)
+
+        expected_value = os.path.relpath(
+            os.path.normpath(os.path.join(str(relative_path), src_code_path)),
+            str(self.default_build_dir),
+        )
+
+        with open(self.built_template, "r") as fp:
+            template_dict = yaml_parse(fp.read())
+            if src_code_prop:
+                self.assertEqual(
+                    expected_value,
+                    jmespath.search(
+                        f"Resources.{skipped_function_logical_id}.Properties.{src_code_prop}", template_dict
+                    ),
+                )
+            if metadata_key:
+                metadata = jmespath.search(f"Resources.{skipped_function_logical_id}.Metadata", template_dict)
+                metadata = metadata if metadata else {}
+                self.assertEqual(expected_value, metadata.get(metadata_key, ""))
+        expected = "Hello World"
+        if not SKIP_DOCKER_TESTS:
+            self._verify_invoke_built_function(
+                self.built_template, skipped_function_logical_id, self._make_parameter_override_arg({}), expected
+            )
 
 
 @skipIf(
@@ -794,8 +947,15 @@ class TestBuildCommand_LayerBuilds(BuildIntegBase):
     EXPECTED_FILES_PROJECT_MANIFEST = {"__init__.py", "main.py", "requirements.txt"}
     EXPECTED_LAYERS_FILES_PROJECT_MANIFEST = {"__init__.py", "layer.py", "numpy", "requirements.txt"}
 
-    @parameterized.expand([("python3.7", False, "LayerOne"), ("python3.7", "use_container", "LayerOne")])
-    def test_build_single_layer(self, runtime, use_container, layer_identifier):
+    @parameterized.expand(
+        [
+            ("python3.7", False, "LayerOne", "ContentUri"),
+            ("python3.7", "use_container", "LayerOne", "ContentUri"),
+            ("python3.7", False, "LambdaLayerOne", "Content"),
+            ("python3.7", "use_container", "LambdaLayerOne", "Content"),
+        ]
+    )
+    def test_build_single_layer(self, runtime, use_container, layer_identifier, content_property):
         if use_container and (SKIP_DOCKER_TESTS or SKIP_DOCKER_BUILD):
             self.skipTest(SKIP_DOCKER_MESSAGE)
 
@@ -813,7 +973,7 @@ class TestBuildCommand_LayerBuilds(BuildIntegBase):
             self.default_build_dir,
             layer_identifier,
             self.EXPECTED_LAYERS_FILES_PROJECT_MANIFEST,
-            "ContentUri",
+            content_property,
             "python",
         )
 
