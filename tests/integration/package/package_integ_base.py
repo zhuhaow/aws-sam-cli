@@ -142,7 +142,7 @@ class PackageIntegBase(TestCase):
     def _method_to_stack_name(self, method_name):
         """Method expects method name which can be a full path. Eg: test.integration.test_deploy_command.method_name"""
         method_name = method_name.split(".")[-1]
-        return f"{method_name.replace('_', '-')}-{CFN_PYTHON_VERSION_SUFFIX}"
+        return f"{method_name.replace('_', '-')}-{CFN_PYTHON_VERSION_SUFFIX}-{uuid.uuid4().hex}"
 
     def _stack_name_to_companion_stack(self, stack_name):
         return CompanionStack(stack_name).stack_name

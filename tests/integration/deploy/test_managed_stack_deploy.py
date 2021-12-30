@@ -23,7 +23,6 @@ SKIP_MANAGED_STACK_TESTS = RUNNING_ON_CI and RUNNING_TEST_FOR_MASTER_ON_CI and n
 # Limits the managed stack tests to be run on a single python version to avoid CI race conditions
 IS_TARGETTED_PYTHON_VERSION = PYTHON_VERSION.startswith("3.6")
 
-CFN_PYTHON_VERSION_SUFFIX = PYTHON_VERSION.replace(".", "-")
 CFN_SLEEP = 3
 # Set region for managed stacks to be in a different region than the ones in deploy
 DEFAULT_REGION = "us-west-2"
@@ -107,11 +106,6 @@ class TestManagedStackDeploy(PackageIntegBase, DeployIntegBase):
         # Remove samconfig.toml
         os.remove(self.test_data_path.joinpath(DEFAULT_CONFIG_FILE_NAME))
         self._managed_stack_sanity_check(self.cfn_client, self.s3_client, DEFAULT_REGION)
-
-    def _method_to_stack_name(self, method_name):
-        """Method expects method name which can be a full path. Eg: test.integration.test_deploy_command.method_name"""
-        method_name = method_name.split(".")[-1]
-        return f"{method_name.replace('_', '-')}-{CFN_PYTHON_VERSION_SUFFIX}"
 
     def _delete_managed_stack(self, cfn_client, s3_client, region, wait=True):
         if not self._does_stack_exist(cfn_client, SAM_CLI_STACK_NAME):
