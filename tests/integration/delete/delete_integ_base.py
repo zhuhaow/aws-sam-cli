@@ -2,10 +2,7 @@ import os
 from pathlib import Path
 from unittest import TestCase
 
-import pytest
 
-
-@pytest.mark.sequential
 class DeleteIntegBase(TestCase):
     @classmethod
     def setUpClass(cls):
