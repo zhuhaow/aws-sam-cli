@@ -11,8 +11,8 @@ configuration:
   - RestOfThem
 
 environment:
-  AWS_DEFAULT_REGION: sa-east-1
-  AWS_REGION: sa-east-1
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_REGION: us-east-1
   SAM_CLI_DEV: 1
 
   # In Windows, tempdir is usually in C:\. But in AppVeyor only D:\ is shared in Docker. 
@@ -109,9 +109,9 @@ for:
 
     test_script:
       - ps: "
-        If (Test-Path env:BY_CANARY){
-          echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
-        }"
+          If (Test-Path env:BY_CANARY){
+            echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+          }"
       - "git --version"
       - "venv\\Scripts\\activate"
       - "docker system prune -a -f"
@@ -135,9 +135,9 @@ for:
 
     test_script:
       - ps: "
-        If (Test-Path env:BY_CANARY){
-          echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
-        }"
+          If (Test-Path env:BY_CANARY){
+            echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+          }"
       - "git --version"
       - "venv\\Scripts\\activate"
       - "docker system prune -a -f"
@@ -149,9 +149,9 @@ for:
 
     test_script:
       - ps: "
-        If (Test-Path env:BY_CANARY){
-          echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
-        }"
+          If (Test-Path env:BY_CANARY){
+            echo Logging in Public ECR; aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws;
+          }"
       - "git --version"
       - "venv\\Scripts\\activate"
       - "docker system prune -a -f"
