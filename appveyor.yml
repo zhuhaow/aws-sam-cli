@@ -24,8 +24,6 @@ environment:
       AWS_S3: 'AWS_S3_36'
       AWS_ECR: 'AWS_ECR_36'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
-      AWS_DEFAULT_REGION: us-east-1
-      AWS_REGION: us-east-1
 
     - PYTHON_HOME: "C:\\Python37-x64"
       PYTHON_VERSION: '3.7'
@@ -38,8 +36,6 @@ environment:
       AWS_S3: 'AWS_S3_37'
       AWS_ECR: 'AWS_ECR_37'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
-      AWS_DEFAULT_REGION: us-east-2
-      AWS_REGION: us-east-2
 
     - PYTHON_HOME: "C:\\Python38-x64"
       PYTHON_VERSION: '3.8'
@@ -52,8 +48,6 @@ environment:
       AWS_S3: 'AWS_S3_38'
       AWS_ECR: 'AWS_ECR_38'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
-      AWS_DEFAULT_REGION: us-west-1
-      AWS_REGION: us-west-1
 
     - PYTHON_HOME: "C:\\Python39-x64"
       PYTHON_VERSION: '3.9'
@@ -66,8 +60,6 @@ environment:
       AWS_S3: 'AWS_S3_39'
       AWS_ECR: 'AWS_ECR_39'
       APPVEYOR_CONSOLE_DISABLE_PTY: true
-      AWS_DEFAULT_REGION: us-west-2
-      AWS_REGION: us-west-2
 
 install:
   # apt repo for python3.9 installation
@@ -123,6 +115,10 @@ install:
 
   # update ca-certificates which causes failures with newest golang library
   - sh: "sudo apt-get install --reinstall ca-certificates"
+
+  # increase re-tries for boto3 clients
+  - sh: "mkdir ~/.aws"
+  - sh: "echo '[default]\nmax_attempts = 40\n' >> ~/.aws/config"
 
 build_script:
   - "python -c \"import sys; print(sys.executable)\""
