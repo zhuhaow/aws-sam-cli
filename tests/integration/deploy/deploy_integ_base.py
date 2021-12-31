@@ -1,10 +1,7 @@
 import os
 from unittest import TestCase
 
-import pytest
 
-
-@pytest.mark.sequential
 class DeployIntegBase(TestCase):
     @classmethod
     def setUpClass(cls):
