@@ -149,7 +149,7 @@ for:
         fi"
       - "pip install -e \".[dev]\""
       - sh: "docker run --rm --privileged multiarch/qemu-user-static --reset -p yes"
-      - sh: "pytest -vv -n 8 -m 'not sequential' tests/integration"
+      - sh: "pytest -vv -n 8 --dist loadfile -m 'not sequential' tests/integration"
       # Set JAVA_HOME to java11
       - sh: "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
       - sh: "pytest -vv tests/integration/buildcmd/test_build_cmd.py -k test_building_java11_in_process"
