@@ -446,7 +446,7 @@ class TestSamPython36HelloWorldIntegration(InvokeIntegBase):
             "GitLayerFunction",
             template_path=self.template_path,
             event_path=self.event_path,
-            region=os.getenv("AWS_DEFAULT_REGION")
+            region=os.getenv("AWS_DEFAULT_REGION"),
         )
 
         process = Popen(command_list, stdout=PIPE)
@@ -468,7 +468,7 @@ class TestSamPython36HelloWorldIntegration(InvokeIntegBase):
             template_path=self.template_path,
             event_path=self.event_path,
             parameter_overrides={"LayerVersion": "5"},
-            region=os.getenv("AWS_DEFAULT_REGION")
+            region=os.getenv("AWS_DEFAULT_REGION"),
         )
 
         process = Popen(command_list, stdout=PIPE)
