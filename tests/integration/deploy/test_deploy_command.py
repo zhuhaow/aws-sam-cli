@@ -85,7 +85,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
                 s3_bucket=self.s3_bucket.name,
                 template=template_path,
                 output_template_file=output_template_file.name,
-                s3_prefix=self.s3_prefix
+                s3_prefix=self.s3_prefix,
             )
             package_process = run_command(command_list=package_command_list)
 
