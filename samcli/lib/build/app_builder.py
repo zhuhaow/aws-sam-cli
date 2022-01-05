@@ -33,6 +33,7 @@ from samcli.lib.utils.resources import (
     AWS_SERVERLESS_FUNCTION,
     AWS_SERVERLESS_LAYERVERSION,
 )
+from samcli.lib.samlib.resource_metadata_normalizer import ResourceMetadataNormalizer
 from samcli.lib.docker.log_streamer import LogStreamer, LogStreamError
 from samcli.lib.providers.provider import ResourcesToBuildCollector, Function, get_full_path, Stack, LayerVersion
 from samcli.lib.utils.colors import Colored
@@ -235,7 +236,7 @@ class ApplicationBuilder:
             container_env_vars = self._make_env_vars(layer, file_env_vars, inline_env_vars)
 
             layer_build_details = LayerBuildDefinition(
-                layer.name,
+                layer.full_path,
                 layer.codeuri,
                 layer.build_method,
                 layer.compatible_runtimes,
@@ -275,10 +276,10 @@ class ApplicationBuilder:
         original_dir = pathlib.Path(stack.location).parent.resolve()
 
         template_dict = stack.template_dict
-
+        normalized_resources = stack.resources
         for logical_id, resource in template_dict.get("Resources", {}).items():
-
-            full_path = get_full_path(stack.stack_path, logical_id)
+            resource_iac_id = ResourceMetadataNormalizer.get_resource_id(resource, logical_id)
+            full_path = get_full_path(stack.stack_path, resource_iac_id)
             has_build_artifact = full_path in built_artifacts
             is_stack = full_path in stack_output_template_path_by_stack_path
 
@@ -286,6 +287,11 @@ class ApplicationBuilder:
                 # this resource was not built or a nested stack.
                 # So skip it because there is no path/uri to update
                 continue
+
+            # clone normalized metadata from stack.resources only to built resources
+            normalized_metadata = normalized_resources.get(logical_id, {}).get("Metadata")
+            if normalized_metadata:
+                resource["Metadata"] = normalized_metadata
 
             resource_type = resource.get("Type")
             properties = resource.setdefault("Properties", {})
