@@ -24,7 +24,7 @@ Parameters:
 
   LayerVersion:
     Type: String
-    Default: "2"
+    Default: "8"
 
 Resources:
   HelloWorldServerlessFunction:
@@ -191,7 +191,7 @@ Resources:
       Handler: main.execute_git
       Runtime: python3.8
       Layers:
-        - arn:aws:lambda:us-east-1:553035198032:layer:git-lambda2:5
+        - !Sub "arn:aws:lambda:${AWS::Region}:553035198032:layer:git-lambda2:8"
 
   GitLayerFunctionParameters:
     Type: AWS::Serverless::Function
@@ -200,6 +200,6 @@ Resources:
       Handler: main.execute_git
       Runtime: python3.8
       Layers:
-        - !Sub "arn:aws:lambda:us-east-1:553035198032:layer:git-lambda2:${LayerVersion}"
+        - !Sub "arn:aws:lambda:${AWS::Region}:553035198032:layer:git-lambda2:${LayerVersion}"
         
 # UTF-8 Test 😐

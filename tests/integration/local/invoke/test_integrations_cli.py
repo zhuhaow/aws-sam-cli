@@ -443,7 +443,10 @@ class TestSamPython36HelloWorldIntegration(InvokeIntegBase):
     @pytest.mark.flaky(reruns=3)
     def test_invoke_returns_expected_results_from_git_function(self):
         command_list = self.get_command_list(
-            "GitLayerFunction", template_path=self.template_path, event_path=self.event_path
+            "GitLayerFunction",
+            template_path=self.template_path,
+            event_path=self.event_path,
+            region=os.getenv("AWS_DEFAULT_REGION")
         )
 
         process = Popen(command_list, stdout=PIPE)
@@ -465,6 +468,7 @@ class TestSamPython36HelloWorldIntegration(InvokeIntegBase):
             template_path=self.template_path,
             event_path=self.event_path,
             parameter_overrides={"LayerVersion": "5"},
+            region=os.getenv("AWS_DEFAULT_REGION")
         )
 
         process = Popen(command_list, stdout=PIPE)
