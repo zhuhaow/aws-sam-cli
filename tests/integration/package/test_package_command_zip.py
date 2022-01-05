@@ -154,7 +154,7 @@ class TestPackageZip(PackageIntegBase):
 
         self.assertIn("{bucket_name}".format(bucket_name=self.s3_bucket.name), process_stdout.decode("utf-8"))
 
-        self.assertIn("{s3_prefix}".format(s3_prefix=s3_prefix), process_stdout.decode("utf-8"))
+        self.assertIn("{s3_prefix}".format(s3_prefix=self.s3_prefix), process_stdout.decode("utf-8"))
 
     @parameterized.expand(
         [
