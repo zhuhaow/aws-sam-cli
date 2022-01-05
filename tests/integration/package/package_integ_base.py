@@ -82,6 +82,7 @@ class PackageIntegBase(TestCase):
         self.test_temp_folder = tempfile.TemporaryDirectory()
         self.test_data_path = Path(tempfile.TemporaryDirectory().name)
         shutil.copytree(self.cls_test_data_path, str(self.test_data_path), symlinks=True, dirs_exist_ok=True)
+        self.s3_prefix = uuid.uuid4().hex
         super().setUp()
 
     def tearDown(self):
