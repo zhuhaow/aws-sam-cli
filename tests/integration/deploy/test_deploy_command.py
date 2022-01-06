@@ -780,6 +780,7 @@ to create a managed default bucket, or run sam deploy --guided",
             kms_key_id=self.kms_key,
             tags="integ=true clarity=yes foo_bar=baz",
             resolve_s3=True,
+            s3_prefix=self.s3_prefix,
         )
 
         deploy_process_execute = run_command(deploy_command_list)
