@@ -60,10 +60,12 @@ class TestApplicationBuilder_build(TestCase):
 
         self.imageFunc1.packagetype = IMAGE
         self.layer1.build_method = "build_method"
+        self.layer1.name = "layer_name1"
         self.layer1.full_path = os.path.join("StackJ", "layer_name1")
         self.layer1.get_build_dir = Mock()
         self.layer1.compatible_architectures = [X86_64]
         self.layer2.build_method = "build_method"
+        self.layer2.name = "layer_name2"
         self.layer2.full_path = os.path.join("StackJ", "layer_name2")
         self.layer2.compatible_architectures = [X86_64]
         self.layer2.get_build_dir = Mock()
@@ -619,6 +621,36 @@ class TestApplicationBuilder_update_template(TestCase):
             "Resources": {
                 "MyFunction1": {"Type": "AWS::Serverless::Function", "Properties": {"CodeUri": "oldvalue"}},
                 "MyFunction2": {"Type": "AWS::Lambda::Function", "Properties": {"Code": "oldvalue"}},
+                "MyCDKFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "aws:cdk:path": "Stack/CDKFunc/Resource",
+                    },
+                },
+                "MyCustomIdFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "SamResourceId": "CustomIdFunc",
+                    },
+                },
+                "SkipMyCDKFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "aws:cdk:path": "Stack/SkipCDKFunc/Resource",
+                        "aws:asset:is-bundled": True,
+                    },
+                },
+                "SkipMyCustomIdFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "SamResourceId": "SkipCustomIdFunc",
+                        "SkipBuild": True,
+                    },
+                },
                 "GlueResource": {"Type": "AWS::Glue::Job", "Properties": {"Command": {"ScriptLocation": "something"}}},
                 "OtherResource": {"Type": "AWS::Lambda::Version", "Properties": {"CodeUri": "something"}},
                 "MyImageFunction1": {
@@ -645,6 +677,8 @@ class TestApplicationBuilder_update_template(TestCase):
         built_artifacts = {
             "MyFunction1": "/path/to/build/MyFunction1",
             "MyFunction2": "/path/to/build/MyFunction2",
+            "CDKFunc": "/path/to/build/MyCDKFunction",
+            "CustomIdFunc": "/path/to/build/MyCustomIdFunction",
             "MyServerlessLayer": "/path/to/build/ServerlessLayer",
             "MyLambdaLayer": "/path/to/build/LambdaLayer",
             "MyImageFunction1": "myimagefunction1:Tag",
@@ -660,6 +694,38 @@ class TestApplicationBuilder_update_template(TestCase):
                 "MyFunction2": {
                     "Type": "AWS::Lambda::Function",
                     "Properties": {"Code": os.path.join("build", "MyFunction2")},
+                },
+                "MyCDKFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": os.path.join("build", "MyCDKFunction")},
+                    "Metadata": {
+                        "Normalized": True,
+                        "aws:cdk:path": "Stack/CDKFunc/Resource",
+                    },
+                },
+                "MyCustomIdFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": os.path.join("build", "MyCustomIdFunction")},
+                    "Metadata": {
+                        "Normalized": True,
+                        "SamResourceId": "CustomIdFunc",
+                    },
+                },
+                "SkipMyCDKFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "aws:cdk:path": "Stack/SkipCDKFunc/Resource",
+                        "aws:asset:is-bundled": True,
+                    },
+                },
+                "SkipMyCustomIdFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "SamResourceId": "SkipCustomIdFunc",
+                        "SkipBuild": True,
+                    },
                 },
                 "GlueResource": {"Type": "AWS::Glue::Job", "Properties": {"Command": {"ScriptLocation": "something"}}},
                 "OtherResource": {"Type": "AWS::Lambda::Version", "Properties": {"CodeUri": "something"}},
@@ -682,6 +748,24 @@ class TestApplicationBuilder_update_template(TestCase):
         }
 
         stack = Mock(stack_path="", template_dict=self.template_dict, location=original_template_path)
+        stack.resources = {
+            "MyCDKFunction": {
+                "Type": "AWS::Lambda::Function",
+                "Properties": {"Code": os.path.join("build", "MyCDKFunction")},
+                "Metadata": {
+                    "Normalized": True,
+                    "aws:cdk:path": "Stack/CDKFunc/Resource",
+                },
+            },
+            "MyCustomIdFunction": {
+                "Type": "AWS::Lambda::Function",
+                "Properties": {"Code": os.path.join("build", "MyCustomIdFunction")},
+                "Metadata": {
+                    "Normalized": True,
+                    "SamResourceId": "CustomIdFunc",
+                },
+            },
+        }
         actual = self.builder.update_template(stack, built_artifacts, {})
         self.assertEqual(actual, expected_result)
 
@@ -698,6 +782,8 @@ class TestApplicationBuilder_update_template(TestCase):
             "ChildStackXXX/MyLambdaLayer": "/path/to/build/ChildStackXXX/LambdaLayer",
             "ChildStackXXX/MyFunction1": "/path/to/build/ChildStackXXX/MyFunction1",
             "ChildStackXXX/MyFunction2": "/path/to/build/ChildStackXXX/MyFunction2",
+            "ChildStackXXX/CDKFunc": "/path/to/build/ChildStackXXX/MyCDKFunction",
+            "ChildStackXXX/CustomIdFunc": "/path/to/build/ChildStackXXX/MyCustomIdFunction",
             "ChildStackXXX/MyImageFunction1": "myimagefunction1:Tag",
         }
         stack_output_paths = {
@@ -714,6 +800,36 @@ class TestApplicationBuilder_update_template(TestCase):
                 "MyFunction2": {
                     "Type": "AWS::Lambda::Function",
                     "Properties": {"Code": os.path.join("build", "ChildStackXXX", "MyFunction2")},
+                },
+                "MyCDKFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": os.path.join("build", "ChildStackXXX", "MyCDKFunction")},
+                    "Metadata": {
+                        "aws:cdk:path": "Stack/CDKFunc/Resource",
+                    },
+                },
+                "MyCustomIdFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": os.path.join("build", "ChildStackXXX", "MyCustomIdFunction")},
+                    "Metadata": {
+                        "SamResourceId": "CustomIdFunc",
+                    },
+                },
+                "SkipMyCDKFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "aws:cdk:path": "Stack/SkipCDKFunc/Resource",
+                        "aws:asset:is-bundled": True,
+                    },
+                },
+                "SkipMyCustomIdFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {"Code": "oldvalue"},
+                    "Metadata": {
+                        "SamResourceId": "SkipCustomIdFunc",
+                        "SkipBuild": True,
+                    },
                 },
                 "GlueResource": {"Type": "AWS::Glue::Job", "Properties": {"Command": {"ScriptLocation": "something"}}},
                 "OtherResource": {"Type": "AWS::Lambda::Version", "Properties": {"CodeUri": "something"}},
@@ -754,12 +870,14 @@ class TestApplicationBuilder_update_template(TestCase):
             template_dict=self.make_root_template(resource_type, location_property_name),
             location=original_root_template_path,
         )
+        stack_root.resources = {}
         actual_root = self.builder.update_template(stack_root, built_artifacts, stack_output_paths)
         stack_child = Mock(
             stack_path="ChildStackXXX",
             template_dict=self.template_dict,
             location=original_child_template_path,
         )
+        stack_child.resources = {}
         actual_child = self.builder.update_template(stack_child, built_artifacts, stack_output_paths)
         self.assertEqual(expected_root, actual_root)
         self.assertEqual(expected_child, actual_child)
@@ -845,6 +963,7 @@ class TestApplicationBuilder_update_template_windows(TestCase):
                 stack.stack_path = ""
                 stack.template_dict = self.template_dict
                 stack.location = original_template_path
+                stack.resources = {}
 
                 actual = self.builder.update_template(stack, built_artifacts, output_template_paths)
                 self.assertEqual(actual, expected_result)

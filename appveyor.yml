@@ -73,7 +73,7 @@ install:
   - sh: "JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64"
   - sh: "PATH=$JAVA_HOME/bin:$PATH"
   - sh: "source ${HOME}/venv${PYTHON_VERSION}/bin/activate"
-  - sh: "rvm use 2.5"
+  - sh: "rvm use 2.7.2"
   - sh: "docker --version"
 
   # Install latest gradle
@@ -86,7 +86,6 @@ install:
   - sh: "virtualenv aws_cli"
   - sh: "./aws_cli/bin/python -m pip install awscli"
   - sh: "PATH=$(echo $PWD'/aws_cli/bin'):$PATH"
-  - sh: "aws --version"
 
   - sh: "sudo apt-get -y install python3.6"
   - sh: "sudo apt-get -y install python2.7"

@@ -1,5 +1,4 @@
 import os
-from samcli.lib.bootstrap.companion_stack.data_types import CompanionStack
 import shutil
 import tempfile
 import time
@@ -40,6 +39,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             cls.docker_client.api.pull(repository=repo, tag=tag)
             cls.docker_client.api.tag(f"{repo}:{tag}", "emulation-python3.8", tag="latest")
             cls.docker_client.api.tag(f"{repo}:{tag}", "emulation-python3.8-2", tag="latest")
+            cls.docker_client.api.tag(f"{repo}:{tag}", "colorsrandomfunctionf61b9209", tag="latest")
 
         # setup signing profile arn & name
         cls.signing_profile_name = os.environ.get("AWS_SIGNING_PROFILE_NAME")
@@ -70,7 +70,13 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
                 cfn_client.delete_stack(StackName=stack_name)
         super().tearDown()
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(
+        [
+            "aws-serverless-function.yaml",
+            "cdk_v1_synthesized_template_zip_functions.json",
+            "cdk_v1_synthesized_template_Level1_nested_zip_functions.json",
+        ]
+    )
     def test_package_and_deploy_no_s3_bucket_all_args(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
         with tempfile.NamedTemporaryFile(delete=False) as output_template_file:
@@ -90,7 +96,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
                 template_file=output_template_file.name,
                 stack_name=stack_name,
                 capabilities="CAPABILITY_IAM",
-                s3_prefix="integ_deploy",
+                s3_prefix=self.s3_prefix,
                 s3_bucket=self.s3_bucket.name,
                 force_upload=True,
                 notification_arns=self.sns_arn,
@@ -108,7 +114,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
                 template_file=output_template_file.name,
                 stack_name=stack_name,
                 capabilities="CAPABILITY_IAM",
-                s3_prefix="integ_deploy",
+                s3_prefix=self.s3_prefix,
                 force_upload=True,
                 notification_arns=self.sns_arn,
                 parameter_overrides="Parameter=Clarity",
@@ -119,7 +125,13 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             deploy_process = run_command(deploy_command_list_execute)
             self.assertEqual(deploy_process.process.returncode, 0)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(
+        [
+            "aws-serverless-function.yaml",
+            "cdk_v1_synthesized_template_zip_functions.json",
+            "cdk_v1_synthesized_template_Level1_nested_zip_functions.json",
+        ]
+    )
     def test_no_package_and_deploy_with_s3_bucket_all_args(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -131,7 +143,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -145,8 +157,15 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         deploy_process_execute = run_command(deploy_command_list)
         self.assertEqual(deploy_process_execute.process.returncode, 0)
 
-    @parameterized.expand(["aws-serverless-function-image.yaml", "aws-lambda-function-image.yaml"])
-    def test_no_package_and_deploy_with_s3_bucket_all_args_image_repository(self, template_file):
+    @parameterized.expand(
+        [
+            "aws-serverless-function-image.yaml",
+            "aws-lambda-function-image.yaml",
+            "cdk_v1_synthesized_template_image_functions.json",
+            "cdk_v1_synthesized_template_Level1_nested_image_functions.json",
+        ]
+    )
+    def test_no_package_and_deploy_image_repository(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
         stack_name = self._method_to_stack_name(self.id())
@@ -157,7 +176,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -173,7 +192,18 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         self.assertEqual(deploy_process_execute.process.returncode, 0)
 
     @parameterized.expand(
-        [("Hello", "aws-serverless-function-image.yaml"), ("MyLambdaFunction", "aws-lambda-function-image.yaml")]
+        [
+            ("Hello", "aws-serverless-function-image.yaml"),
+            ("MyLambdaFunction", "aws-lambda-function-image.yaml"),
+            ("ColorsRandomFunctionF61B9209", "cdk_v1_synthesized_template_image_functions.json"),
+            ("ColorsRandomFunction", "cdk_v1_synthesized_template_image_functions.json"),
+            ("ColorsRandomFunction", "cdk_v1_synthesized_template_Level1_nested_image_functions.json"),
+            ("ColorsRandomFunctionF61B9209", "cdk_v1_synthesized_template_Level1_nested_image_functions.json"),
+            (
+                "Level1Stack/Level2Stack/ColorsRandomFunction",
+                "cdk_v1_synthesized_template_Level1_nested_image_functions.json",
+            ),
+        ]
     )
     def test_no_package_and_deploy_with_s3_bucket_all_args_image_repositories(self, resource_id, template_file):
         template_path = self.test_data_path.joinpath(template_file)
@@ -186,7 +216,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repositories=f"{resource_id}={self.ecr_repo_name}",
             force_upload=True,
@@ -201,8 +231,15 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         deploy_process_execute = run_command(deploy_command_list)
         self.assertEqual(deploy_process_execute.process.returncode, 0)
 
-    @parameterized.expand(["aws-serverless-function-image.yaml", "aws-lambda-function-image.yaml"])
-    def test_no_package_and_deploy_with_s3_bucket_all_args_resolve_image_repos(self, template_file):
+    @parameterized.expand(
+        [
+            "aws-serverless-function-image.yaml",
+            "aws-lambda-function-image.yaml",
+            "cdk_v1_synthesized_template_image_functions.json",
+            "cdk_v1_synthesized_template_Level1_nested_image_functions.json",
+        ]
+    )
+    def test_no_package_and_deploy_resolve_image_repos(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
         stack_name = self._method_to_stack_name(self.id())
@@ -213,7 +250,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -228,7 +265,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         deploy_process_execute = run_command(deploy_command_list)
         self.assertEqual(deploy_process_execute.process.returncode, 0)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_no_package_and_deploy_with_s3_bucket_and_no_confirm_changeset(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -240,7 +277,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -256,7 +293,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         deploy_process_execute = run_command(deploy_command_list)
         self.assertEqual(deploy_process_execute.process.returncode, 0)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_deploy_no_redeploy_on_same_built_artifacts(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
         # Build project
@@ -269,7 +306,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         deploy_command_list = self.get_deploy_command_list(
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -293,7 +330,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         # Does not cause a re-deploy
         self.assertEqual(deploy_process_execute.process.returncode, 1)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_no_package_and_deploy_with_s3_bucket_all_args_confirm_changeset(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -305,7 +342,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -319,7 +356,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
         deploy_process_execute = run_command_with_input(deploy_command_list, "Y".encode())
         self.assertEqual(deploy_process_execute.process.returncode, 0)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_deploy_without_s3_bucket(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -330,7 +367,7 @@ class TestDeploy(PackageIntegBase, DeployIntegBase):
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             force_upload=True,
             notification_arns=self.sns_arn,
             parameter_overrides="Parameter=Clarity",
@@ -352,7 +389,7 @@ to create a managed default bucket, or run sam deploy --guided",
             deploy_process_execute.stderr,
         )
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_deploy_without_stack_name(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -360,7 +397,7 @@ to create a managed default bucket, or run sam deploy --guided",
         deploy_command_list = self.get_deploy_command_list(
             template_file=template_path,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             force_upload=True,
             notification_arns=self.sns_arn,
             parameter_overrides="Parameter=Clarity",
@@ -373,7 +410,7 @@ to create a managed default bucket, or run sam deploy --guided",
         deploy_process_execute = run_command(deploy_command_list)
         self.assertEqual(deploy_process_execute.process.returncode, 2)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_deploy_without_capabilities(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -383,7 +420,7 @@ to create a managed default bucket, or run sam deploy --guided",
         deploy_command_list = self.get_deploy_command_list(
             template_file=template_path,
             stack_name=stack_name,
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             force_upload=True,
             notification_arns=self.sns_arn,
             parameter_overrides="Parameter=Clarity",
@@ -396,14 +433,13 @@ to create a managed default bucket, or run sam deploy --guided",
         deploy_process_execute = run_command(deploy_command_list)
         self.assertEqual(deploy_process_execute.process.returncode, 1)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
-    def test_deploy_without_template_file(self, template_file):
+    def test_deploy_without_template_file(self):
         stack_name = self._method_to_stack_name(self.id())
 
         # Package and Deploy in one go without confirming change set.
         deploy_command_list = self.get_deploy_command_list(
             stack_name=stack_name,
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             force_upload=True,
             notification_arns=self.sns_arn,
             parameter_overrides="Parameter=Clarity",
@@ -417,7 +453,7 @@ to create a managed default bucket, or run sam deploy --guided",
         # Error template file not specified
         self.assertEqual(deploy_process_execute.process.returncode, 1)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_deploy_with_s3_bucket_switch_region(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -429,7 +465,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.bucket_name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -449,7 +485,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.bucket_name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -474,7 +510,7 @@ to create a managed default bucket, or run sam deploy --guided",
             stderr,
         )
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_deploy_twice_with_no_fail_on_empty_changeset(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -485,7 +521,7 @@ to create a managed default bucket, or run sam deploy --guided",
             "template_file": template_path,
             "stack_name": stack_name,
             "capabilities": "CAPABILITY_IAM",
-            "s3_prefix": "integ_deploy",
+            "s3_prefix": self.s3_prefix,
             "s3_bucket": self.bucket_name,
             "force_upload": True,
             "notification_arns": self.sns_arn,
@@ -513,7 +549,7 @@ to create a managed default bucket, or run sam deploy --guided",
         stdout = deploy_process_execute.stdout.strip()
         self.assertIn(bytes(f"No changes to deploy. Stack {stack_name} is up to date", encoding="utf-8"), stdout)
 
-    @parameterized.expand(["aws-serverless-function.yaml"])
+    @parameterized.expand(["aws-serverless-function.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
     def test_deploy_twice_with_fail_on_empty_changeset(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
@@ -525,7 +561,7 @@ to create a managed default bucket, or run sam deploy --guided",
             "template_file": template_path,
             "stack_name": stack_name,
             "capabilities": "CAPABILITY_IAM",
-            "s3_prefix": "integ_deploy",
+            "s3_prefix": self.s3_prefix,
             "s3_bucket": self.bucket_name,
             "force_upload": True,
             "notification_arns": self.sns_arn,
@@ -744,6 +780,7 @@ to create a managed default bucket, or run sam deploy --guided",
             kms_key_id=self.kms_key,
             tags="integ=true clarity=yes foo_bar=baz",
             resolve_s3=True,
+            s3_prefix=self.s3_prefix,
         )
 
         deploy_process_execute = run_command(deploy_command_list)
@@ -771,7 +808,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             config_file=config_path,
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             capabilities="CAPABILITY_IAM",
         )
@@ -790,7 +827,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             config_file=config_path,
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             capabilities="CAPABILITY_IAM",
         )
@@ -832,7 +869,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -916,7 +953,7 @@ to create a managed default bucket, or run sam deploy --guided",
             # Note(xinhol): --capabilities does not allow passing multiple, we need to fix it
             # here we use samconfig-deep-nested.toml as a workaround
             config_file=self.test_data_path.joinpath("samconfig-deep-nested.toml"),
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -944,7 +981,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -981,7 +1018,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -1014,7 +1051,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -1042,7 +1079,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -1063,7 +1100,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -1101,7 +1138,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -1122,7 +1159,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -1155,7 +1192,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             image_repository=self.ecr_repo_name,
             force_upload=True,
@@ -1171,8 +1208,8 @@ to create a managed default bucket, or run sam deploy --guided",
         deploy_process_execute = run_command(deploy_command_list)
         self.assertEqual(deploy_process_execute.process.returncode, 0)
 
-    def test_deploy_logs_warning_with_cdk_project(self):
-        template_file = "aws-serverless-function-cdk.yaml"
+    @parameterized.expand(["aws-serverless-function-cdk.yaml", "cdk_v1_synthesized_template_zip_functions.json"])
+    def test_deploy_logs_warning_with_cdk_project(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
 
         stack_name = self._method_to_stack_name(self.id())
@@ -1183,7 +1220,7 @@ to create a managed default bucket, or run sam deploy --guided",
             template_file=template_path,
             stack_name=stack_name,
             capabilities="CAPABILITY_IAM",
-            s3_prefix="integ_deploy",
+            s3_prefix=self.s3_prefix,
             s3_bucket=self.s3_bucket.name,
             force_upload=True,
             notification_arns=self.sns_arn,
@@ -1195,7 +1232,7 @@ to create a managed default bucket, or run sam deploy --guided",
         )
 
         warning_message = bytes(
-            "Warning: CDK apps are not officially supported with this command.\n"
+            f"Warning: CDK apps are not officially supported with this command.{os.linesep}"
             "We recommend you use this alternative command: cdk deploy",
             encoding="utf-8",
         )

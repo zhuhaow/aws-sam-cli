@@ -61,7 +61,7 @@ install:
   - "python -m pip install --upgrade setuptools wheel virtualenv"
 
   # Install AWS CLI Globally via pip3
-  - "python -m pip install awscli"
+  - "pip install awscli"
   - "aws --version"
 
   # Create pre-dev virtual env without installing dev depenencies
@@ -77,6 +77,11 @@ install:
   - "python -m virtualenv venv"
   - "venv\\Scripts\\activate"
   - "python --version"
+  - # Actually install SAM CLI's dependencies
+  - "pip install -e \".[dev]\""
+
+  # Install aws cli
+  - "pip install awscli"
   - "deactivate"
 
   # Switch to Docker Linux containers
@@ -88,24 +93,24 @@ install:
   # Echo final Path
   - "echo %PATH%"
 
+build_script:
+  # Install pre-dev dependencies
+  # This env is currently used for doing import check with Pylint without dev.txt dependencies installed
+  - "pre-dev-venv\\Scripts\\activate"
+  - "python -c \"import sys; print(sys.executable)\""
+  - "pip install -e \".[pre-dev]\""
+  - "deactivate"
+
+  # Install dev dependencies
+  - "venv\\Scripts\\activate"
+  - "python -c \"import sys; print(sys.executable)\""
+  - "pip install -e \".[dev]\""
+  - "deactivate"
+
 for:
   - matrix:
       only:
         - configuration: RestOfThem
-
-    build_script:
-      # Install pre-dev dependencies
-      # This env is currently used for doing import check with Pylint without dev.txt dependencies installed
-      - "pre-dev-venv\\Scripts\\activate"
-      - "python -c \"import sys; print(sys.executable)\""
-      - "pip install -e \".[pre-dev]\""
-      - "deactivate"
-
-      # Install dev dependencies
-      - "venv\\Scripts\\activate"
-      - "python -c \"import sys; print(sys.executable)\""
-      - "pip install -e \".[dev]\""
-      - "deactivate"
 
     test_script:
       - ps: "
