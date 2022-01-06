@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 import uuid
 import json
 import time
@@ -56,7 +58,7 @@ class PackageIntegBase(TestCase):
             cls.pre_created_ecr_repo if cls.pre_created_ecr_repo else str(uuid.uuid4()).replace("-", "")[:10]
         )
         cls.bucket_name = cls.pre_created_bucket if cls.pre_created_bucket else str(uuid.uuid4())
-        cls.test_data_path = Path(__file__).resolve().parents[1].joinpath("testdata", "package")
+        cls.cls_test_data_path = Path(__file__).resolve().parents[1].joinpath("testdata", "package")
 
         # Intialize S3 client
         s3 = boto3.resource("s3")
@@ -77,10 +79,14 @@ class PackageIntegBase(TestCase):
             time.sleep(SLEEP)
 
     def setUp(self):
+        self.test_temp_folder = tempfile.TemporaryDirectory()
+        self.test_data_path = Path(tempfile.TemporaryDirectory().name)
+        shutil.copytree(self.cls_test_data_path, str(self.test_data_path), symlinks=True, dirs_exist_ok=True)
         self.s3_prefix = uuid.uuid4().hex
         super().setUp()
 
     def tearDown(self):
+        self.test_temp_folder.cleanup()
         super().tearDown()
 
     def base_command(self):

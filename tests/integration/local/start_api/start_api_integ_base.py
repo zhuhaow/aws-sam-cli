@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 import docker
+import pytest
 
 from tests.testing_utils import SKIP_DOCKER_MESSAGE, SKIP_DOCKER_TESTS, run_command
 

@@ -122,7 +122,11 @@ class PackageRegressionBase(TestCase):
         if skip_sam_metadata:
             self._remove_sam_related_metadata(output_sam)
 
-        self.assertEqual(output_sam, output_aws, msg=f"Different output\nSAM\n{output_sam}\nAWS\n{output_aws}")
+        self.assertEqual(
+            output_sam,
+            output_aws,
+            f"Found difference\n{json.dumps(output_sam, indent=2)}\n{json.dumps(output_aws, indent=2)}",
+        )
 
     def _remove_sam_related_metadata(self, output_sam):
         if "Resources" not in output_sam:

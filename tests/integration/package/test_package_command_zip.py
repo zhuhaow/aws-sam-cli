@@ -145,7 +145,9 @@ class TestPackageZip(PackageIntegBase):
     def test_package_with_prefix(self, template_file):
         template_path = self.test_data_path.joinpath(template_file)
         command_list = self.get_command_list(
-            s3_bucket=self.s3_bucket.name, template_file=template_path, s3_prefix=self.s3_prefix
+            s3_bucket=self.s3_bucket.name,
+            template_file=template_path,
+            s3_prefix=self.s3_prefix,
         )
 
         process = Popen(command_list, stdout=PIPE)
