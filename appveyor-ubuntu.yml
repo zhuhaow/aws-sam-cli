@@ -1,5 +1,5 @@
 version: 1.0.{build}
-image: 
+image:
   - Ubuntu
 
 configuration:
@@ -139,82 +139,82 @@ for:
       only:
         - configuration: DeleteCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/delete/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/delete/"
 
   - matrix:
       only:
         - configuration: DeployCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/deploy/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/deploy/"
 
   - matrix:
       only:
         - configuration: InitCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/init/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/init/"
 
 
   - matrix:
       only:
         - configuration: LocalCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/local/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/local/"
 
   - matrix:
       only:
         - configuration: PackageCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/package/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/package/"
 
   - matrix:
       only:
         - configuration: PipelineCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/pipeline/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/pipeline/"
 
   - matrix:
       only:
         - configuration: PublishCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/publish/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/publish/"
 
   - matrix:
       only:
         - configuration: SyncCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/sync/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/sync/"
 
   - matrix:
       only:
         - configuration: TelemetryCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/telemetry/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/telemetry/"
 
   - matrix:
       only:
         - configuration: ValidateCmd
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/validate/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/validate/"
 
 
   - matrix:
