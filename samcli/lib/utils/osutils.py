@@ -115,7 +115,7 @@ def tempfile_platform_independent():
 
 # NOTE: Py3.8 or higher has a ``dir_exist_ok=True`` parameter to provide this functionality.
 #       This method can be removed if we stop supporting Py37
-def copytree(source, destination, ignore=None):
+def copytree(source, destination, ignore=None, symlinks=False):
     """
     Similar to shutil.copytree except that it removes the limitation that the destination directory should
     be present.
@@ -129,6 +129,9 @@ def copytree(source, destination, ignore=None):
     :param ignore:
         A function that returns a set of file names to ignore, given a list of available file names. Similar to the
         ``ignore`` property of ``shutils.copytree`` method
+    :type symlinks: bool
+    :param symlinks:
+        Boolean flag to follow symlinks
     """
 
     if not os.path.exists(destination):
@@ -156,9 +159,9 @@ def copytree(source, destination, ignore=None):
         new_destination = os.path.join(destination, name)
 
         if os.path.isdir(new_source):
-            copytree(new_source, new_destination, ignore=ignore)
+            copytree(new_source, new_destination, ignore=ignore, symlinks=symlinks)
         else:
-            shutil.copy2(new_source, new_destination)
+            shutil.copy2(new_source, new_destination, follow_symlinks=symlinks)
 
 
 def convert_files_to_unix_line_endings(path: str, target_files: Optional[List[str]] = None) -> None:

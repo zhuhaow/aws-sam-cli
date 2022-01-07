@@ -11,6 +11,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from samcli.lib.bootstrap.companion_stack.data_types import CompanionStack
+from samcli.lib.utils.osutils import copytree
 
 CFN_PYTHON_VERSION_SUFFIX = os.environ.get("PYTHON_VERSION", "0.0.0").replace(".", "-")
 SLEEP = 3
@@ -81,7 +82,7 @@ class PackageIntegBase(TestCase):
     def setUp(self):
         self.test_temp_folder = tempfile.TemporaryDirectory()
         self.test_data_path = Path(tempfile.TemporaryDirectory().name)
-        shutil.copytree(self.cls_test_data_path, str(self.test_data_path), symlinks=True, dirs_exist_ok=True)
+        copytree(str(self.cls_test_data_path), str(self.test_data_path), symlinks=True)
         self.s3_prefix = uuid.uuid4().hex
         super().setUp()
 

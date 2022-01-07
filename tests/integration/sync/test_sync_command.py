@@ -15,6 +15,7 @@ from botocore.config import Config
 from parameterized import parameterized
 
 from samcli.lib.bootstrap.bootstrap import SAM_CLI_STACK_NAME
+from samcli.lib.utils.osutils import copytree
 from samcli.lib.utils.resources import (
     AWS_APIGATEWAY_RESTAPI,
     AWS_LAMBDA_FUNCTION,
@@ -60,7 +61,7 @@ class TestSync(PackageIntegBase, BuildIntegBase, SyncIntegBase):
 
         self.test_temp_folder = tempfile.TemporaryDirectory()
         self.test_data_path = Path(tempfile.TemporaryDirectory().name)
-        shutil.copytree(self.cls_sync_test_data_path, str(self.test_data_path), symlinks=True, dirs_exist_ok=True)
+        copytree(str(self.cls_sync_test_data_path), str(self.test_data_path), symlinks=True)
 
     def tearDown(self):
         shutil.rmtree(os.path.join(os.getcwd(), ".aws-sam", "build"), ignore_errors=True)
