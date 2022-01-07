@@ -140,7 +140,7 @@ for:
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv -N 4 tests/integration/delete/"
+      - sh: "pytest -vv -n 4 tests/integration/delete/"
 
   - matrix:
       only:
