@@ -128,7 +128,7 @@ for:
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv -n 4 tests/integration/buildcmd/"
+      - sh: "pytest -vv -n 2 tests/integration/buildcmd/"
 
   - matrix:
       only:
@@ -160,7 +160,7 @@ for:
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv -n 2 tests/integration/pipeline/"
+      - sh: "pytest -vv tests/integration/pipeline/"
 
   - matrix:
       only:
@@ -168,7 +168,7 @@ for:
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv -n 2 tests/integration/sync/"
+      - sh: "pytest -vv tests/integration/sync/"
 
   - matrix:
       only:
