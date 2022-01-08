@@ -6,15 +6,11 @@ configuration:
   - BuildCmd
   - DeleteCmd
   - DeployCmd
-  - InitCmd
+  - RestOfCmds
   - LocalCmd
-  - PackageCmd
   - PipelineCmd
-  - PublishCmd
   - SyncCmd
-  - TelemetryCmd
-  - ValidateCmd
-  - RestOfThem
+  - RestOfTests
 
 environment:
   AWS_DEFAULT_REGION: us-east-1
@@ -140,7 +136,7 @@ for:
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv -n 4 tests/integration/delete/"
+      - sh: "pytest -vv -n 2 tests/integration/delete/"
 
   - matrix:
       only:
@@ -148,16 +144,7 @@ for:
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv -n 4 tests/integration/deploy/"
-
-  - matrix:
-      only:
-        - configuration: InitCmd
-
-    test_script:
-      - "pip install -e \".[dev]\""
-      - sh: "pytest -vv tests/integration/init/"
-
+      - sh: "pytest -vv -n 2 tests/integration/deploy/"
 
   - matrix:
       only:
@@ -169,27 +156,11 @@ for:
 
   - matrix:
       only:
-        - configuration: PackageCmd
-
-    test_script:
-      - "pip install -e \".[dev]\""
-      - sh: "pytest -vv tests/integration/package/"
-
-  - matrix:
-      only:
         - configuration: PipelineCmd
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv tests/integration/pipeline/"
-
-  - matrix:
-      only:
-        - configuration: PublishCmd
-
-    test_script:
-      - "pip install -e \".[dev]\""
-      - sh: "pytest -vv tests/integration/publish/"
+      - sh: "pytest -vv -n 2 tests/integration/pipeline/"
 
   - matrix:
       only:
@@ -197,28 +168,20 @@ for:
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv -n 4 tests/integration/sync/"
+      - sh: "pytest -vv -n 2 tests/integration/sync/"
 
   - matrix:
       only:
-        - configuration: TelemetryCmd
+        - configuration: RestOfCmds
 
-    test_script:
-      - "pip install -e \".[dev]\""
-      - sh: "pytest -vv tests/integration/telemetry/"
-
-  - matrix:
-      only:
-        - configuration: ValidateCmd
-
-    test_script:
-      - "pip install -e \".[dev]\""
-      - sh: "pytest -vv tests/integration/validate/"
+      test_script:
+        - "pip install -e \".[dev]\""
+        - sh: "pytest -vv tests/integration/init/ tests/integration/package/ tests/integration/publish/ tests/integration/telemetry/ tests/integration/validate/"
 
 
   - matrix:
       only:
-        - configuration: RestOfThem
+        - configuration: RestOfTests
 
     test_script:
       - # Pre-dev Tests
