@@ -174,9 +174,9 @@ for:
       only:
         - configuration: RestOfCmds
 
-      test_script:
-        - "pip install -e \".[dev]\""
-        - sh: "pytest -vv tests/integration/init/ tests/integration/package/ tests/integration/publish/ tests/integration/telemetry/ tests/integration/validate/"
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/init/ tests/integration/package/ tests/integration/publish/ tests/integration/telemetry/ tests/integration/validate/"
 
 
   - matrix:
