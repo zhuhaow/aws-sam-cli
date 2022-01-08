@@ -16,7 +16,6 @@ from botocore.config import Config
 from parameterized import parameterized
 
 from samcli.lib.bootstrap.bootstrap import SAM_CLI_STACK_NAME
-from samcli.lib.utils.osutils import copytree
 from samcli.lib.utils.resources import (
     AWS_APIGATEWAY_RESTAPI,
     AWS_LAMBDA_FUNCTION,
@@ -47,7 +46,7 @@ class TestSync(BuildIntegBase, PackageIntegBase, SyncIntegBase):
     def setUpClass(cls):
         PackageIntegBase.setUpClass()
 
-        cls.cls_sync_test_data_path = Path(__file__).resolve().parents[1].joinpath("testdata", "sync")
+        cls.test_data_path = Path(__file__).resolve().parents[1].joinpath("testdata", "sync")
 
     def setUp(self):
         self.cfn_client = boto3.client("cloudformation")
@@ -60,10 +59,6 @@ class TestSync(BuildIntegBase, PackageIntegBase, SyncIntegBase):
         time.sleep(CFN_SLEEP)
         self.s3_prefix = uuid.uuid4().hex
         super().setUp()
-
-        self.test_temp_folder = tempfile.TemporaryDirectory()
-        self.test_data_path = Path(tempfile.TemporaryDirectory().name)
-        copytree(str(self.cls_sync_test_data_path), str(self.test_data_path), symlinks=True)
 
     def tearDown(self):
         shutil.rmtree(os.path.join(os.getcwd(), ".aws-sam", "build"), ignore_errors=True)
@@ -79,7 +74,6 @@ class TestSync(BuildIntegBase, PackageIntegBase, SyncIntegBase):
                 self._delete_companion_stack(cfn_client, ecr_client, self._stack_name_to_companion_stack(stack_name))
                 cfn_client.delete_stack(StackName=stack_name)
         super().tearDown()
-        self.test_temp_folder.cleanup()
 
     @skipIf(
         IS_WINDOWS,
