@@ -53,7 +53,10 @@ class BuildIntegBase(TestCase):
         self.template_path = os.path.join(self.test_data_path, self.template)
 
     def tearDown(self):
-        self.test_temp_dir.cleanup()
+        try:
+            self.test_temp_dir.cleanup()
+        except:
+            LOG.warning("Can't cleanup temporary test files")
 
     @classmethod
     def base_command(cls):
