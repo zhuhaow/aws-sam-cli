@@ -6,9 +6,18 @@ build: off
 clone_folder: D:\source
 
 configuration:
-  - Sequential
-  - Parallel
-  - RestOfThem
+  - BuildCmd
+  - DeleteCmd
+  - DeployCmd
+  - LocalCmd
+  - PipelineCmd
+  - SyncCmd
+  - InitCmd
+  - PackageCmd
+  - PublishCmd
+  - TelemetryCmd
+  - ValidateCmd
+  - RestOfTests
 
 environment:
   AWS_DEFAULT_REGION: us-east-1
@@ -111,10 +120,101 @@ build_script:
   - "pip install -e \".[dev]\""
   - "deactivate"
 
+  - "docker system prune -a -f"
+
 for:
   - matrix:
       only:
-        - configuration: RestOfThem
+        - configuration: BuildCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv -n 2 tests/integration/buildcmd/"
+
+  - matrix:
+      only:
+        - configuration: DeleteCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv -n 2 tests/integration/delete/"
+
+  - matrix:
+      only:
+        - configuration: DeployCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv -n 2 tests/integration/deploy/"
+
+  - matrix:
+      only:
+        - configuration: LocalCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/local/"
+
+  - matrix:
+      only:
+        - configuration: PipelineCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/pipeline/"
+
+  - matrix:
+      only:
+        - configuration: SyncCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/sync/"
+
+  - matrix:
+      only:
+        - configuration: InitCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/init/"
+
+  - matrix:
+      only:
+        - configuration: PackageCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/package/"
+
+  - matrix:
+      only:
+        - configuration: PublishCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/publish/"
+
+  - matrix:
+      only:
+        - configuration: TelemetryCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/telemetry/"
+
+  - matrix:
+      only:
+        - configuration: ValidateCmd
+
+    test_script:
+      - "venv\\Scripts\\activate"
+      - "pytest -vv tests/integration/validate/"
+
+
+  - matrix:
+      only:
+        - configuration: RestOfTests
 
     test_script:
       # Run pylint on pre-dev env to catch import errors
@@ -130,24 +230,6 @@ for:
       - "pytest -n 4 tests/functional"
       - "pytest -vv tests/regression"
       - "deactivate"
-
-  - matrix:
-      only:
-        - configuration: Sequential
-
-    test_script:
-      - "venv\\Scripts\\activate"
-      - "docker system prune -a -f"
-      - "pytest -vv -m sequential tests/integration" # run other in sequential
-
-  - matrix:
-      only:
-        - configuration: Parallel
-
-    test_script:
-      - "venv\\Scripts\\activate"
-      - "docker system prune -a -f"
-      - "pytest -vv -n 4 -m \"not sequential\" tests/integration" # run some tests in parallel
 
 # Uncomment for RDP
 # on_finish:
