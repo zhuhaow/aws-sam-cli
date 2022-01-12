@@ -6,10 +6,14 @@ configuration:
   - BuildCmd
   - DeleteCmd
   - DeployCmd
-  - RestOfCmds
   - LocalCmd
   - PipelineCmd
   - SyncCmd
+  - InitCmd
+  - PackageCmd
+  - PublishCmd
+  - TelemetryCmd
+  - ValidateCmd
   - RestOfTests
 
 environment:
@@ -18,6 +22,17 @@ environment:
   SAM_CLI_DEV: 1
 
   matrix:
+
+    - PYTHON_HOME: "C:\\Python36-x64"
+      PYTHON_VERSION: '3.6'
+      PYTHON_ARCH: '64'
+      NOSE_PARAMETERIZED_NO_WARN: 1
+      INSTALL_PY_37_PIP: 1
+      INSTALL_PY_38_PIP: 1
+      INSTALL_PY_39_PIP: 1
+      AWS_S3: 'AWS_S3_36'
+      AWS_ECR: 'AWS_ECR_36'
+      APPVEYOR_CONSOLE_DISABLE_PTY: true
 
     - PYTHON_HOME: "C:\\Python37-x64"
       PYTHON_VERSION: '3.7'
@@ -172,12 +187,43 @@ for:
 
   - matrix:
       only:
-        - configuration: RestOfCmds
+        - configuration: InitCmd
 
     test_script:
       - "pip install -e \".[dev]\""
-      - sh: "pytest -vv tests/integration/init/ tests/integration/package/ tests/integration/publish/ tests/integration/telemetry/ tests/integration/validate/"
+      - sh: "pytest -vv tests/integration/init/"
 
+  - matrix:
+      only:
+        - configuration: PackageCmd
+
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/package/"
+
+  - matrix:
+      only:
+        - configuration: PublishCmd
+
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/publish/"
+
+  - matrix:
+      only:
+        - configuration: TelemetryCmd
+
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/telemetry/"
+
+  - matrix:
+      only:
+        - configuration: ValidateCmd
+
+    test_script:
+      - "pip install -e \".[dev]\""
+      - sh: "pytest -vv tests/integration/validate/"
 
   - matrix:
       only:
