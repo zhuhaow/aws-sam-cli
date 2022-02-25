@@ -12,7 +12,7 @@ docker~=4.2.0
 dateparser~=1.0
 requests==2.25.1
 serverlessrepo==0.1.10
-git+https://github.com/zhuhaow/aws-lambda-builders.git@v1.13.0-no-copy-build@egg=aws_lambda_builders
+aws_lambda_builders @ https://github.com/zhuhaow/aws-lambda-builders/archive/v1.13.0-no-copy-build.zip
 tomlkit==0.7.2
 watchdog==2.1.2
 
